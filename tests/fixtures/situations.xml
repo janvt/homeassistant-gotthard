@@ -153,6 +153,121 @@
             </values></comment></generalPublicComment>
           </situationRecord>
         </situation>
+        <!--
+          Closures of the A2 and A4, the live feed's of 2026-10-28 with their
+          times (the French and Italian left out). Announced ahead, a closure
+          has the announcement as its overall start and itself as a period.
+        -->
+        <situation id="roads">
+          <situationRecord id="axen-now" xsi:type="RoadOrCarriagewayOrLaneManagement">
+            <validity>
+              <validityStatus>active</validityStatus>
+              <validityTimeSpecification><overallStartTime>2026-09-09T07:08:00.000000Z</overallStartTime></validityTimeSpecification>
+            </validity>
+            <roadOrCarriagewayOrLaneManagementType>roadClosed</roadOrCarriagewayOrLaneManagementType>
+            <generalPublicComment><comment><values>
+              <value lang="de">Freigegeben: A4 Altdorf &lt;-&gt; Brunnen zwischen Ortschaft Flüelen und Ortschaft Sisikon Sachlage: Strecke gesperrt Ursache: Technische Probleme</value>
+            </values></comment></generalPublicComment>
+          </situationRecord>
+          <situationRecord id="axen-nights" xsi:type="RoadOrCarriagewayOrLaneManagement">
+            <validity>
+              <validityStatus>active</validityStatus>
+              <validityTimeSpecification>
+                <overallStartTime>2026-09-22T09:18:00.000000Z</overallStartTime>
+                <validPeriod><startOfPeriod>2026-11-02T21:00:00.000000Z</startOfPeriod><endOfPeriod>2026-11-04T04:00:00.000000Z</endOfPeriod></validPeriod>
+              </validityTimeSpecification>
+            </validity>
+            <roadOrCarriagewayOrLaneManagementType>roadClosed</roadOrCarriagewayOrLaneManagementType>
+            <generalPublicComment><comment><values>
+              <value lang="de">Freigegeben: A4 Altdorf &lt;-&gt; Brunnen zwischen Tunnel Flüelen-Tunnel und Ortschaft Sisikon Sachlage: Strecke gesperrt Baustelle, Länge [km] 7.3 Dauer: nachts voraussichtlich 02.11.2026 22:00 bis 04.11.2026 05:00 Empfehlung: eine lokale Umleitung ist eingerichtet</value>
+            </values></comment></generalPublicComment>
+          </situationRecord>
+          <!-- Ramps and exits closed: not the road. -->
+          <situationRecord id="axen-ramps" xsi:type="RoadOrCarriagewayOrLaneManagement">
+            <validity>
+              <validityStatus>active</validityStatus>
+              <validityTimeSpecification>
+                <overallStartTime>2026-10-23T12:31:00.000000Z</overallStartTime>
+                <validPeriod><startOfPeriod>2027-02-04T11:00:00.000000Z</startOfPeriod><endOfPeriod>2027-02-04T17:00:00.000000Z</endOfPeriod></validPeriod>
+              </validityTimeSpecification>
+            </validity>
+            <roadOrCarriagewayOrLaneManagementType>roadClosed</roadOrCarriagewayOrLaneManagementType>
+            <generalPublicComment><comment><values>
+              <value lang="de">Freigegeben: A4 Altdorf &lt;-&gt; Brunnen Anschluss Brunnen-Süd Sachlage: Ein- und Ausfahrt gesperrt Baustelle, Länge [km] 0.12 Dauer: tagsüber voraussichtlich 04.02.2027 12:00 bis 04.02.2027 18:00</value>
+            </values></comment></generalPublicComment>
+          </situationRecord>
+          <situationRecord id="a4-exit" xsi:type="RoadOrCarriagewayOrLaneManagement">
+            <validity><validityStatus>active</validityStatus></validity>
+            <roadOrCarriagewayOrLaneManagementType>roadClosed</roadOrCarriagewayOrLaneManagementType>
+            <generalPublicComment><comment><values>
+              <value lang="de">Freigegeben: A4 Zürich -&gt; Brunnen Anschluss Wettswil am Albis Sachlage: Ausfahrt gesperrt Baustelle, Länge [km] 0.5</value>
+            </values></comment></generalPublicComment>
+          </situationRecord>
+          <situationRecord id="a4-north" xsi:type="RoadOrCarriagewayOrLaneManagement">
+            <validity>
+              <validityStatus>active</validityStatus>
+              <validityTimeSpecification>
+                <overallStartTime>2026-10-22T15:56:00.000000Z</overallStartTime>
+                <validPeriod><startOfPeriod>2026-11-05T20:00:00.000000Z</startOfPeriod><endOfPeriod>2026-11-06T04:00:00.000000Z</endOfPeriod></validPeriod>
+              </validityTimeSpecification>
+            </validity>
+            <roadOrCarriagewayOrLaneManagementType>roadClosed</roadOrCarriagewayOrLaneManagementType>
+            <generalPublicComment><comment><values>
+              <value lang="de">Freigegeben: A4 Winterthur -&gt; Schaffhausen zwischen Autobahndreieck Verzweigung Winterthur-Nord und Anschluss Adlikon Sachlage: Strecke gesperrt Baustelle, Länge [km] 6.9 Dauer: nachts voraussichtlich 05.11.2026 21:00 bis 06.11.2026 05:00 Empfehlung: eine Umleitung ist eingerichtet</value>
+            </values></comment></generalPublicComment>
+          </situationRecord>
+          <situationRecord id="a2-north" xsi:type="RoadOrCarriagewayOrLaneManagement">
+            <validity>
+              <validityStatus>active</validityStatus>
+              <validityTimeSpecification>
+                <overallStartTime>2026-10-14T07:53:00.000000Z</overallStartTime>
+                <validPeriod><startOfPeriod>2026-11-02T21:00:00.000000Z</startOfPeriod><endOfPeriod>2026-11-04T04:00:00.000000Z</endOfPeriod></validPeriod>
+              </validityTimeSpecification>
+            </validity>
+            <roadOrCarriagewayOrLaneManagementType>roadClosed</roadOrCarriagewayOrLaneManagementType>
+            <generalPublicComment><comment><values>
+              <value lang="de">Freigegeben: A2 Gotthard -&gt; Luzern zwischen Anschluss Stans-Nord und Anschluss Hergiswil Süd Sachlage: Strecke gesperrt Baustelle, Länge [km] 4.0 Dauer: nachts voraussichtlich 02.11.2026 22:00 bis 04.11.2026 05:00</value>
+            </values></comment></generalPublicComment>
+          </situationRecord>
+          <situationRecord id="a2-both-ways" xsi:type="RoadOrCarriagewayOrLaneManagement">
+            <validity>
+              <validityStatus>active</validityStatus>
+              <validityTimeSpecification>
+                <overallStartTime>2026-10-13T05:24:00.000000Z</overallStartTime>
+                <validPeriod><startOfPeriod>2026-11-04T21:00:00.000000Z</startOfPeriod><endOfPeriod>2026-11-05T04:00:00.000000Z</endOfPeriod></validPeriod>
+              </validityTimeSpecification>
+            </validity>
+            <roadOrCarriagewayOrLaneManagementType>roadClosed</roadOrCarriagewayOrLaneManagementType>
+            <generalPublicComment><comment><values>
+              <value lang="de">Freigegeben: A2 Gotthard &lt;-&gt; Luzern zwischen Anschluss Luzern-Zentrum und Tunnel Sonnenberg-Tunnel Sachlage: Strecke gesperrt Baustelle, Länge [km] 2.3 Dauer: nachts voraussichtlich 04.11.2026 22:00 bis 05.11.2026 05:00 Empfehlung: eine Umleitung ist eingerichtet</value>
+            </values></comment></generalPublicComment>
+          </situationRecord>
+          <!-- Neither place is in the road's list: counted both ways. -->
+          <situationRecord id="a2-hagnau" xsi:type="RoadOrCarriagewayOrLaneManagement">
+            <validity>
+              <validityStatus>active</validityStatus>
+              <validityTimeSpecification>
+                <overallStartTime>2026-10-08T10:00:00.000000Z</overallStartTime>
+                <validPeriod><startOfPeriod>2026-11-13T11:00:00.000000Z</startOfPeriod><endOfPeriod>2026-11-16T04:00:00.000000Z</endOfPeriod></validPeriod>
+              </validityTimeSpecification>
+            </validity>
+            <roadOrCarriagewayOrLaneManagementType>roadClosed</roadOrCarriagewayOrLaneManagementType>
+            <generalPublicComment><comment><values>
+              <value lang="de">Freigegeben: A2 Verzweigung Hagnau -&gt; Birsfelden zwischen Autobahndreieck Verzweigung Hagnau und Anschluss Birsfelden Hard Sachlage: Strecke gesperrt Baustelle, Länge [km] 0.2 Dauer: voraussichtlich 13.11.2026 12:00 bis 16.11.2026 05:00</value>
+            </values></comment></generalPublicComment>
+          </situationRecord>
+          <!-- Rescinded: the tunnel was closed southbound for a broken-down car. -->
+          <situationRecord id="tunnel-rescinded" xsi:type="RoadOrCarriagewayOrLaneManagement">
+            <validity>
+              <validityStatus>definedByValidityTimeSpec</validityStatus>
+              <validityTimeSpecification><overallStartTime>2026-10-28T12:35:00.000000Z</overallStartTime></validityTimeSpecification>
+            </validity>
+            <roadOrCarriagewayOrLaneManagementType>roadClosed</roadOrCarriagewayOrLaneManagementType>
+            <generalPublicComment><comment><values>
+              <value lang="de">Aufgehoben: A2 Gotthard -&gt; Chiasso Tunnel Gotthard-Tunnel Sachlage: Tunnel gesperrt Ursache: Pannenfahrzeug</value>
+            </values></comment></generalPublicComment>
+          </situationRecord>
+        </situation>
         <situation id="elsewhere">
           <situationRecord id="zurich-accident" xsi:type="Accident">
             <validity><validityStatus>active</validityStatus></validity>

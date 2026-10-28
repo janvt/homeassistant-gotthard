@@ -43,6 +43,21 @@ is refused.
 The north portal's queue is the one southbound before Göschenen; the south
 portal's is northbound before Airolo.
 
+A second device, **National roads**, has the closures of the A2 and the A4
+from the same messages:
+
+| Entity | |
+|---|---|
+| Axenstrasse | Open, or closed: the A4 between Brunnen and Flüelen (rockfall, works, nights) |
+| Next Axenstrasse closure | When the next announced closure starts; all of them in `closures` |
+| A2 closures northbound (to Basel), southbound (to Chiasso) | How many closures there are now; them in `current`, those to come in `planned` |
+| A4 closures northbound (to Schaffhausen), southbound (to Altdorf) | The same for the A4 |
+
+A closure is the road closed ("Strecke gesperrt", "Tunnel gesperrt"), not a
+lane, the hard shoulder or a ramp. One both ways counts in each direction.
+A closure "nachts" or "tagsüber" only counts in those hours of each day of
+its period.
+
 ## How the messages are read
 
 FEDRO's messages give a queue's length and the time it costs only in their

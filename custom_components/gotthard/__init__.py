@@ -60,6 +60,14 @@ class GotthardCoordinator(DataUpdateCoordinator[GotthardStatus]):
             entry_type=DeviceEntryType.SERVICE,
             configuration_url="https://www.astra.admin.ch",
         )
+        # The A2 and A4 closures and the Axenstrasse, from the same messages.
+        self.roads_device_info = DeviceInfo(
+            identifiers={(DOMAIN, f"{entry.entry_id}-roads")},
+            name="National roads",
+            manufacturer="FEDRO (ASTRA)",
+            entry_type=DeviceEntryType.SERVICE,
+            configuration_url="https://www.astra.admin.ch",
+        )
 
     async def _async_update_data(self) -> GotthardStatus:
         try:

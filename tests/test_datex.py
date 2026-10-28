@@ -2,6 +2,7 @@
 
 import datetime
 from pathlib import Path
+from zoneinfo import ZoneInfo
 
 import pytest
 
@@ -14,7 +15,12 @@ NOW = datetime.datetime(2026, 10, 28, 12, 0, tzinfo=CET)
 
 
 def ids(messages):
-    return [message.identifier for message in messages]
+    """The records' ids, of messages or of closures."""
+    return [getattr(m, "message", m).identifier for m in messages]
+
+
+def local(*args):
+    return datetime.datetime(*args, tzinfo=ZoneInfo("Europe/Zurich"))
 
 
 def test_publication_time():
@@ -117,3 +123,86 @@ def test_bare_publication_without_envelope():
 def test_invalid(document):
     with pytest.raises(DatexError):
         parse(document, NOW)
+
+
+# ── closures of the A2 and A4 ───────────────────────────────────────────────
+def test_the_axenstrasse_closed_with_no_end():
+    status = parse(FIXTURE, NOW)
+    assert status.axenstrasse.closed
+    assert ids(status.axenstrasse.current) == ["axen-now"]
+    assert status.axenstrasse.current[0].end is None
+
+
+def test_an_announced_closure_starts_with_its_period_not_its_announcement():
+    """Taking the announcement as the start closed the road from the day it
+    was published."""
+    status = parse(
+        FIXTURE.replace(b"Technische Probleme", b"x")
+        .replace(b'id="axen-now"', b'id="axen-now-gone"')
+        .replace(
+            b"<overallStartTime>2026-09-09T07:08:00.000000Z</overallStartTime>",
+            b"<overallStartTime>2026-09-09T07:08:00.000000Z</overallStartTime>"
+            b"<overallEndTime>2026-09-10T07:08:00.000000Z</overallEndTime>",
+        ),
+        NOW,
+    )
+    assert not status.axenstrasse.closed
+    assert ids(status.axenstrasse.planned) == ["axen-nights"]
+    assert status.axenstrasse.planned[0].start == local(2026, 11, 2, 22, 0)
+
+
+def test_a_nightly_closure_only_at_night():
+    status = parse(FIXTURE, local(2026, 11, 3, 2, 0))
+    night = next(
+        c for c in status.axenstrasse.current if c.message.identifier == "axen-nights"
+    )
+    assert night.end == local(2026, 11, 3, 5, 0)
+    # Between its two nights.
+    day = parse(FIXTURE, local(2026, 11, 3, 12, 0)).axenstrasse
+    assert "axen-nights" not in ids(day.current)
+    assert day.planned[0].start == local(2026, 11, 3, 22, 0)
+    assert day.planned[0].end == local(2026, 11, 4, 5, 0)
+
+
+def test_after_its_last_night():
+    status = parse(FIXTURE, local(2026, 11, 4, 12, 0))
+    assert "axen-nights" not in ids(
+        status.axenstrasse.current + status.axenstrasse.planned
+    )
+
+
+def test_ramps_and_exits_are_not_closures():
+    status = parse(FIXTURE, NOW)
+    every = [
+        c
+        for road in status.roads.values()
+        for d in road.values()
+        for c in d.current + d.planned
+    ]
+    assert not {"axen-ramps", "a4-exit"} & set(ids(every))
+
+
+def test_closures_by_road_and_direction():
+    roads = parse(FIXTURE, NOW).roads
+    # The Gotthard tunnel's closures close the A2 too, both ways.
+    tunnel = ["closure-later", "closure-much-later"]
+    assert ids(roads["A2"][NORTH].planned) == [
+        *tunnel,
+        "a2-north",
+        "a2-both-ways",
+        "a2-hagnau",
+    ]
+    assert ids(roads["A2"][SOUTH].planned) == [*tunnel, "a2-both-ways", "a2-hagnau"]
+    assert (
+        ids(roads["A4"][NORTH].current)
+        == ids(roads["A4"][SOUTH].current)
+        == ["axen-now"]
+    )
+    assert ids(roads["A4"][NORTH].planned) == ["axen-nights", "a4-north"]
+    assert ids(roads["A4"][SOUTH].planned) == ["axen-nights"]
+
+
+def test_a_rescinded_closure_is_gone():
+    status = parse(FIXTURE, NOW)
+    assert not status.tunnel_closed
+    assert "tunnel-rescinded" not in ids(status.tunnel.current + status.tunnel.planned)

@@ -1,8 +1,9 @@
 """Traffic at the Gotthard, from FEDRO's DATEX II feed of traffic messages.
 
 The feed (opentransportdata.swiss, "Traffic Situations") holds every current
-message for Switzerland: queues, closures, roadworks, accidents.  Only those
-about the Gotthard road tunnel, its approaches and the pass road are kept.
+message for Switzerland: queues, closures, roadworks, accidents.  Kept are
+those about the Gotthard road tunnel, its approaches and the pass road, and
+the closures of the A2 and the A4 (the Axenstrasse among them).
 
 The figures are in the messages' texts only: the structured elements for a
 queue's length or the time it costs are left empty.  A message reads e.g.
@@ -24,6 +25,7 @@ import logging
 import re
 import xml.etree.ElementTree as ET
 from dataclasses import dataclass, field
+from zoneinfo import ZoneInfo
 
 import aiohttp
 
@@ -99,6 +101,24 @@ TUNNEL = re.compile(r"Gotthard-Tunnel|Göschenen\b.*\bAirolo|Airolo\b.*\bGösche
 LENGTH = re.compile(r"Länge \[km\]\s*(\d+(?:[.,]\d+)?)")
 DELAY = re.compile(r"\[min\]\s*(\d+)")
 
+# The roads whose closures are kept, their places from north to south as the
+# messages name their directions: "A2 Luzern -> Basel" is northbound.
+ROADS = {
+    "A2": ("Basel", "Luzern", "Gotthard", "Chiasso"),
+    "A4": ("Schaffhausen", "Winterthur", "Zürich", "Brunnen", "Altdorf"),
+}
+BOTH = "both"
+# The Axenstrasse is the A4 between Brunnen and Flüelen ("A4 Altdorf <->
+# Brunnen zwischen Ortschaft Flüelen und Ortschaft Sisikon").
+AXENSTRASSE = re.compile(r"Flüelen|Sisikon|Morschach|Brunnen-Süd|Axen")
+# A closure only at night, or only by day, every day of its period: "Dauer:
+# nachts voraussichtlich 02.11.2026 22:00 bis 04.11.2026 05:00".
+DAILY = re.compile(
+    r"Dauer:\s*(?:nachts|tagsüber)\s+voraussichtlich\s+\d\d\.\d\d\.\d{4}\s+"
+    r"(\d\d):(\d\d)\s+bis\s+\d\d\.\d\d\.\d{4}\s+(\d\d):(\d\d)"
+)
+SWITZERLAND = ZoneInfo("Europe/Zurich")
+
 
 class DatexError(Exception):
     """The messages could not be obtained."""
@@ -155,7 +175,32 @@ class Message:
             return match.group("location")
         return self.text.partition("Sachlage:")[0]
 
-    def is_current(self, now: datetime.datetime) -> bool:
+    @property
+    def direction(self) -> str:
+        """NORTH or SOUTH on a road of ROADS, BOTH, or "" on another road."""
+        match = HEADER.match(self.text)
+        places = ROADS.get(self.road)
+        if not (match and places):
+            return ""
+        if match["arrow"] == "<->":
+            return BOTH
+        try:
+            origin = places.index(match["origin"])
+            destination = places.index(match["destination"])
+        except ValueError:
+            # "A2 Verzweigung Hagnau -> Birsfelden": a place in neither list.
+            return BOTH
+        return SOUTH if destination > origin else NORTH
+
+    @property
+    def daily(self) -> tuple[datetime.time, datetime.time] | None:
+        """The hours it applies on each day of its period, if not all day."""
+        if match := DAILY.search(self.text):
+            start_h, start_m, end_h, end_m = map(int, match.groups())
+            return datetime.time(start_h, start_m), datetime.time(end_h, end_m)
+        return None
+
+    def _in_period(self, now: datetime.datetime) -> bool:
         # The feed has messages "active" before they start: roadworks
         # announced for next week, say.
         if self.status not in ("active", "definedByValidityTimeSpec"):
@@ -164,8 +209,34 @@ class Message:
             self.end is None or now < self.end
         )
 
-    def is_planned(self, now: datetime.datetime) -> bool:
-        return self.start is not None and now < self.start
+    def is_current(self, now: datetime.datetime) -> bool:
+        if not self._in_period(now):
+            return False
+        if (daily := self.daily) is None:
+            return True
+        start, end = daily
+        local = now.astimezone(SWITZERLAND).time()
+        # A night runs past midnight.
+        return start <= local < end if start < end else local >= start or local < end
+
+    def next_start(self, now: datetime.datetime) -> datetime.datetime | None:
+        """When it next applies, if it doesn't now and will."""
+        if self.status not in ("active", "definedByValidityTimeSpec"):
+            return None
+        if self.start is not None and now < self.start:
+            return self.start
+        daily = self.daily
+        if daily is None or not self._in_period(now) or self.is_current(now):
+            return None
+        start = _at(now, daily[0])
+        return start if self.end is None or start < self.end else None
+
+    def end_after(self, start: datetime.datetime) -> datetime.datetime | None:
+        """When it ends if it starts, or started, at `start`."""
+        if (daily := self.daily) is None:
+            return self.end
+        end = _at(start, daily[1])
+        return min(end, self.end) if self.end else end
 
 
 @dataclass(frozen=True)
@@ -176,17 +247,67 @@ class Queue:
     delay_min: int | None
 
 
+@dataclass(frozen=True)
+class Closure:
+    """A message closing a road, from when to when this time."""
+
+    message: Message
+    start: datetime.datetime | None
+    end: datetime.datetime | None
+    direction: str  # NORTH, SOUTH, BOTH, or ""
+
+
+@dataclass
+class Closures:
+    current: list[Closure] = field(default_factory=list)
+    # Yet to come, the next first.
+    planned: list[Closure] = field(default_factory=list)
+
+    @property
+    def closed(self) -> bool:
+        return bool(self.current)
+
+    def add(self, message: Message, now: datetime.datetime) -> None:
+        if message.is_current(now):
+            self.current.append(
+                Closure(
+                    message, message.start, message.end_after(now), message.direction
+                )
+            )
+        elif start := message.next_start(now):
+            self.planned.append(
+                Closure(message, start, message.end_after(start), message.direction)
+            )
+
+    def sort(self) -> None:
+        self.planned.sort(key=lambda closure: closure.start)
+
+
 @dataclass
 class GotthardStatus:
     publication_time: datetime.datetime | None
     queues: dict[str, Queue | None] = field(
         default_factory=lambda: {NORTH: None, SOUTH: None}
     )
-    tunnel_closed: bool = False
-    # Closures of the tunnel yet to come, the next first.
-    planned_closures: list[Message] = field(default_factory=list)
+    tunnel: Closures = field(default_factory=Closures)
+    axenstrasse: Closures = field(default_factory=Closures)
+    # The full closures of each road of ROADS, by direction.
+    roads: dict[str, dict[str, Closures]] = field(
+        default_factory=lambda: {
+            road: {NORTH: Closures(), SOUTH: Closures()} for road in ROADS
+        }
+    )
     # Everything current about the Gotthard.
     messages: list[Message] = field(default_factory=list)
+
+    @property
+    def tunnel_closed(self) -> bool:
+        return self.tunnel.closed
+
+    @property
+    def planned_closures(self) -> list[Closure]:
+        """The tunnel's."""
+        return self.tunnel.planned
 
 
 class Datex:
@@ -240,21 +361,31 @@ def parse(document: bytes, now: datetime.datetime) -> GotthardStatus:
     status = GotthardStatus(_time(publication.findtext(f"{DX2}publicationTime")))
     for element in publication.iter(f"{DX2}situationRecord"):
         message = _message(element)
-        if message.text.startswith(RESCINDED) or not NEAR_GOTTHARD.search(
-            message.location
-        ):
+        if message.text.startswith(RESCINDED):
+            continue
+        if message.road in ROADS and _is_closure(message):
+            directions = (
+                (NORTH, SOUTH) if message.direction == BOTH else (message.direction,)
+            )
+            for direction in directions:
+                status.roads[message.road][direction].add(message, now)
+            if message.road == "A4" and AXENSTRASSE.search(message.location):
+                status.axenstrasse.add(message, now)
+        if not NEAR_GOTTHARD.search(message.location):
             continue
         if _is_tunnel_closure(message):
-            if message.is_current(now):
-                status.tunnel_closed = True
-            elif message.is_planned(now):
-                status.planned_closures.append(message)
+            status.tunnel.add(message, now)
         if not message.is_current(now):
             continue
         status.messages.append(message)
         if portal := _queue_portal(message):
             status.queues[portal] = _longer(status.queues[portal], _queue(message))
-    status.planned_closures.sort(key=lambda message: message.start)
+    for closures in (
+        status.tunnel,
+        status.axenstrasse,
+        *(c for road in status.roads.values() for c in road.values()),
+    ):
+        closures.sort()
     return status
 
 
@@ -266,13 +397,14 @@ def _message(element: ET.Element) -> Message:
         status = (validity.findtext(f"{DX2}validityStatus") or "").strip()
         spec = validity.find(f"{DX2}validityTimeSpecification")
         if spec is not None:
-            starts = [spec.findtext(f"{DX2}overallStartTime")] + [
-                period.findtext(f"{DX2}startOfPeriod")
-                for period in spec.iter(f"{DX2}validPeriod")
+            # A closure announced ahead has the announcement as its overall
+            # start and the closure itself as a period: the period wins.
+            periods = list(spec.iter(f"{DX2}validPeriod"))
+            starts = [p.findtext(f"{DX2}startOfPeriod") for p in periods] or [
+                spec.findtext(f"{DX2}overallStartTime")
             ]
-            ends = [spec.findtext(f"{DX2}overallEndTime")] + [
-                period.findtext(f"{DX2}endOfPeriod")
-                for period in spec.iter(f"{DX2}validPeriod")
+            ends = [p.findtext(f"{DX2}endOfPeriod") for p in periods] or [
+                spec.findtext(f"{DX2}overallEndTime")
             ]
             start = min(filter(None, map(_time, starts)), default=None)
             end = max(filter(None, map(_time, ends)), default=None)
@@ -312,12 +444,24 @@ def _time(text: str | None) -> datetime.datetime | None:
         return None
 
 
+def _at(moment: datetime.datetime, time: datetime.time) -> datetime.datetime:
+    """The first `time` of day, Swiss time, after `moment`."""
+    local = moment.astimezone(SWITZERLAND)
+    at = local.replace(hour=time.hour, minute=time.minute, second=0, microsecond=0)
+    return at if at > local else at + datetime.timedelta(days=1)
+
+
+def _is_closure(message: Message) -> bool:
+    """The road closed: not a lane, the hard shoulder, or a ramp."""
+    return bool(CLOSED.search(message.situation))
+
+
 def _is_tunnel_closure(message: Message) -> bool:
     # The pass road (H2) links the portals too.
     return bool(
         message.road == "A2"
         and TUNNEL.search(message.location)
-        and CLOSED.search(message.situation)
+        and _is_closure(message)
     )
 
 

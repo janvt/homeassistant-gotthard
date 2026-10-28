@@ -29,6 +29,9 @@
         "binary_sensor": {
             "tunnel": {
                 "name": "Tunnel"
+            },
+            "axenstrasse": {
+                "name": "Axenstrasse"
             }
         },
         "camera": {
@@ -57,6 +60,21 @@
             },
             "messages": {
                 "name": "Traffic messages"
+            },
+            "next_axenstrasse_closure": {
+                "name": "Next Axenstrasse closure"
+            },
+            "closures_a2_north": {
+                "name": "A2 closures northbound (to Basel)"
+            },
+            "closures_a2_south": {
+                "name": "A2 closures southbound (to Chiasso)"
+            },
+            "closures_a4_north": {
+                "name": "A4 closures northbound (to Schaffhausen)"
+            },
+            "closures_a4_south": {
+                "name": "A4 closures southbound (to Altdorf)"
             }
         }
     }

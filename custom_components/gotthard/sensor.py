@@ -1,4 +1,5 @@
-"""Queues before the portals, closures and messages of the Gotthard."""
+"""Queues before the portals, closures and messages of the Gotthard, and the
+closures of the A2 and A4."""
 
 import datetime
 from collections.abc import Callable
@@ -18,13 +19,21 @@ from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
 from custom_components.gotthard import GotthardConfigEntry, GotthardCoordinator
 from custom_components.gotthard.const import ATTRIBUTION, NORTH, SOUTH
-from custom_components.gotthard.datex import GotthardStatus, Message
+from custom_components.gotthard.datex import (
+    ROADS,
+    Closure,
+    Closures,
+    GotthardStatus,
+    Message,
+)
 
 
 @dataclass(frozen=True, kw_only=True)
 class GotthardSensorDescription(SensorEntityDescription):
     value: Callable[[GotthardStatus], Any]
     attributes: Callable[[GotthardStatus, str], dict[str, Any]] | None = None
+    # The Gotthard's, or the national roads'.
+    roads: bool = False
 
 
 def _length(portal: str) -> Callable[[GotthardStatus], float | None]:
@@ -44,16 +53,33 @@ def _delay(portal: str) -> Callable[[GotthardStatus], int | None]:
     return value
 
 
-def _next_closure(status: GotthardStatus) -> datetime.datetime | None:
-    return status.planned_closures[0].start if status.planned_closures else None
+def _next(closures: Callable[[GotthardStatus], Closures]):
+    def value(status: GotthardStatus) -> datetime.datetime | None:
+        planned = closures(status).planned
+        return planned[0].start if planned else None
+
+    return value
 
 
-def _closure_attributes(status: GotthardStatus, language: str) -> dict[str, Any]:
-    return {
-        "closures": [
-            _describe(closure, language) for closure in status.planned_closures
-        ]
-    }
+def _planned(closures: Callable[[GotthardStatus], Closures]):
+    def attributes(status: GotthardStatus, language: str) -> dict[str, Any]:
+        return {"closures": [_closure(c, language) for c in closures(status).planned]}
+
+    return attributes
+
+
+def _road(road: str, direction: str) -> Callable[[GotthardStatus], Closures]:
+    return lambda status: status.roads[road][direction]
+
+
+def _road_attributes(closures: Callable[[GotthardStatus], Closures]):
+    def attributes(status: GotthardStatus, language: str) -> dict[str, Any]:
+        return {
+            "current": [_closure(c, language) for c in closures(status).current],
+            "planned": [_closure(c, language) for c in closures(status).planned],
+        }
+
+    return attributes
 
 
 def _message_attributes(status: GotthardStatus, language: str) -> dict[str, Any]:
@@ -66,6 +92,23 @@ def _describe(message: Message, language: str) -> dict[str, Any]:
         "start": message.start.isoformat() if message.start else None,
         "end": message.end.isoformat() if message.end else None,
     }
+
+
+def _closure(closure: Closure, language: str) -> dict[str, Any]:
+    return {
+        "text": closure.message.in_language(language),
+        "start": closure.start.isoformat() if closure.start else None,
+        "end": closure.end.isoformat() if closure.end else None,
+        "direction": closure.direction,
+    }
+
+
+def _tunnel(status: GotthardStatus) -> Closures:
+    return status.tunnel
+
+
+def _axenstrasse(status: GotthardStatus) -> Closures:
+    return status.axenstrasse
 
 
 SENSORS = [
@@ -96,8 +139,8 @@ SENSORS = [
         key="next_closure",
         translation_key="next_closure",
         device_class=SensorDeviceClass.TIMESTAMP,
-        value=_next_closure,
-        attributes=_closure_attributes,
+        value=_next(_tunnel),
+        attributes=_planned(_tunnel),
     ),
     GotthardSensorDescription(
         key="messages",
@@ -105,6 +148,27 @@ SENSORS = [
         state_class=SensorStateClass.MEASUREMENT,
         value=lambda status: len(status.messages),
         attributes=_message_attributes,
+    ),
+    GotthardSensorDescription(
+        key="next_axenstrasse_closure",
+        translation_key="next_axenstrasse_closure",
+        device_class=SensorDeviceClass.TIMESTAMP,
+        value=_next(_axenstrasse),
+        attributes=_planned(_axenstrasse),
+        roads=True,
+    ),
+    # How many closures each road has now, by direction; they and those to
+    # come in the attributes.
+    *(
+        GotthardSensorDescription(
+            key=f"closures_{road.lower()}_{direction}",
+            translation_key=f"closures_{road.lower()}_{direction}",
+            value=lambda status, c=_road(road, direction): len(c(status).current),
+            attributes=_road_attributes(_road(road, direction)),
+            roads=True,
+        )
+        for road in ROADS
+        for direction in (NORTH, SOUTH)
     ),
 ]
 
@@ -122,6 +186,9 @@ async def async_setup_entry(
 class GotthardSensor(CoordinatorEntity[GotthardCoordinator], SensorEntity):
     _attr_attribution = ATTRIBUTION
     _attr_has_entity_name = True
+    # Long lists of texts, which change with every message: not for the
+    # recorder.
+    _unrecorded_attributes = frozenset({"messages", "closures", "current", "planned"})
     entity_description: GotthardSensorDescription
 
     def __init__(
@@ -130,7 +197,11 @@ class GotthardSensor(CoordinatorEntity[GotthardCoordinator], SensorEntity):
         super().__init__(coordinator)
         self.entity_description = description
         self._attr_unique_id = f"{coordinator.config_entry.entry_id}-{description.key}"
-        self._attr_device_info = coordinator.device_info
+        self._attr_device_info = (
+            coordinator.roads_device_info
+            if description.roads
+            else coordinator.device_info
+        )
 
     @property
     def native_value(self) -> Any:

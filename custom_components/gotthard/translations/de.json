@@ -29,6 +29,9 @@
         "binary_sensor": {
             "tunnel": {
                 "name": "Tunnel"
+            },
+            "axenstrasse": {
+                "name": "Axenstrasse"
             }
         },
         "camera": {
@@ -57,6 +60,21 @@
             },
             "messages": {
                 "name": "Verkehrsmeldungen"
+            },
+            "next_axenstrasse_closure": {
+                "name": "Nächste Sperrung der Axenstrasse"
+            },
+            "closures_a2_north": {
+                "name": "Sperrungen A2 Richtung Basel"
+            },
+            "closures_a2_south": {
+                "name": "Sperrungen A2 Richtung Chiasso"
+            },
+            "closures_a4_north": {
+                "name": "Sperrungen A4 Richtung Schaffhausen"
+            },
+            "closures_a4_south": {
+                "name": "Sperrungen A4 Richtung Altdorf"
             }
         }
     }

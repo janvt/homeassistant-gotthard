@@ -6,7 +6,7 @@ from http import HTTPStatus
 import pytest
 from homeassistant.components.camera import async_get_image
 from homeassistant.config_entries import SOURCE_REAUTH, ConfigEntryState
-from homeassistant.const import STATE_ON, STATE_UNAVAILABLE
+from homeassistant.const import STATE_OFF, STATE_ON, STATE_UNAVAILABLE
 
 from custom_components.gotthard.const import NORTH, SOUTH, UPDATE_INTERVAL, WEBCAMS
 from custom_components.gotthard.datex import URL
@@ -85,3 +85,20 @@ async def test_webcams(hass, loaded, aioclient_mock):
     assert (
         sum(str(call[1]) == WEBCAMS[NORTH] for call in aioclient_mock.mock_calls) == 1
     )
+
+
+async def test_national_roads(hass, loaded):
+    axen = hass.states.get("binary_sensor.national_roads_axenstrasse")
+    assert axen.state == STATE_OFF
+    assert axen.attributes["closures"][0]["text"].startswith(
+        "Freigegeben: A4 Altdorf <-> Brunnen zwischen Ortschaft Flüelen"
+    )
+    nxt = hass.states.get("sensor.national_roads_next_axenstrasse_closure")
+    assert datetime.datetime.fromisoformat(
+        nxt.state
+    ) == datetime.datetime.fromisoformat("2026-11-02T22:00:00+01:00")
+    a4 = hass.states.get("sensor.national_roads_a4_closures_northbound_to_schaffhausen")
+    assert a4.state == "1"
+    assert len(a4.attributes["planned"]) == 2
+    a2 = hass.states.get("sensor.national_roads_a2_closures_southbound_to_chiasso")
+    assert (a2.state, len(a2.attributes["planned"])) == ("0", 4)
