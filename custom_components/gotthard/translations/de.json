@@ -1,0 +1,63 @@
+{
+    "config": {
+        "abort": {
+            "already_configured": "Der Gotthard ist bereits eingerichtet",
+            "reauth_successful": "Der neue API-Schlüssel funktioniert"
+        },
+        "error": {
+            "invalid_auth": "Der API-Schlüssel wurde abgelehnt",
+            "cannot_connect": "Die Verkehrsmeldungen konnten nicht geladen werden; bitte später erneut versuchen"
+        },
+        "step": {
+            "user": {
+                "title": "Gotthard",
+                "description": "Die Verkehrsmeldungen stammen vom Bundesamt für Strassen (ASTRA). Sie brauchen einen kostenlosen API-Schlüssel für «Traffic Situations» von {api_key_url}.",
+                "data": {
+                    "api_key": "API-Schlüssel"
+                }
+            },
+            "reauth_confirm": {
+                "title": "Gotthard: neuer API-Schlüssel",
+                "description": "Der API-Schlüssel wurde abgelehnt. Schlüssel laufen nach sechs Monaten ab: Holen Sie einen neuen bei {api_key_url}.",
+                "data": {
+                    "api_key": "API-Schlüssel"
+                }
+            }
+        }
+    },
+    "entity": {
+        "binary_sensor": {
+            "tunnel": {
+                "name": "Tunnel"
+            }
+        },
+        "camera": {
+            "webcam_north": {
+                "name": "Nordportal (Göschenen)"
+            },
+            "webcam_south": {
+                "name": "Südportal (Airolo)"
+            }
+        },
+        "sensor": {
+            "queue_north": {
+                "name": "Stau vor dem Nordportal"
+            },
+            "queue_south": {
+                "name": "Stau vor dem Südportal"
+            },
+            "delay_north": {
+                "name": "Zeitverlust vor dem Nordportal"
+            },
+            "delay_south": {
+                "name": "Zeitverlust vor dem Südportal"
+            },
+            "next_closure": {
+                "name": "Nächste Tunnelsperrung"
+            },
+            "messages": {
+                "name": "Verkehrsmeldungen"
+            }
+        }
+    }
+}

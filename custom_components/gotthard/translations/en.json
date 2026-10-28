@@ -1,0 +1,63 @@
+{
+    "config": {
+        "abort": {
+            "already_configured": "The Gotthard is already set up",
+            "reauth_successful": "The new API key works"
+        },
+        "error": {
+            "invalid_auth": "The API key was refused",
+            "cannot_connect": "The traffic messages could not be loaded; please retry later"
+        },
+        "step": {
+            "user": {
+                "title": "Gotthard",
+                "description": "The traffic messages come from the Swiss Federal Roads Office (FEDRO). They need a free API key for \"Traffic Situations\", from {api_key_url}.",
+                "data": {
+                    "api_key": "API key"
+                }
+            },
+            "reauth_confirm": {
+                "title": "Gotthard: new API key",
+                "description": "The API key was refused. Keys expire after six months: get a new one from {api_key_url}.",
+                "data": {
+                    "api_key": "API key"
+                }
+            }
+        }
+    },
+    "entity": {
+        "binary_sensor": {
+            "tunnel": {
+                "name": "Tunnel"
+            }
+        },
+        "camera": {
+            "webcam_north": {
+                "name": "North portal (Göschenen)"
+            },
+            "webcam_south": {
+                "name": "South portal (Airolo)"
+            }
+        },
+        "sensor": {
+            "queue_north": {
+                "name": "Queue before the north portal"
+            },
+            "queue_south": {
+                "name": "Queue before the south portal"
+            },
+            "delay_north": {
+                "name": "Delay before the north portal"
+            },
+            "delay_south": {
+                "name": "Delay before the south portal"
+            },
+            "next_closure": {
+                "name": "Next tunnel closure"
+            },
+            "messages": {
+                "name": "Traffic messages"
+            }
+        }
+    }
+}

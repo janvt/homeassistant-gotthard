@@ -1,0 +1,15 @@
+{
+    "domain": "gotthard",
+    "name": "Gotthard",
+    "codeowners": [
+        "@janvt"
+    ],
+    "config_flow": true,
+    "dependencies": [],
+    "documentation": "https://github.com/janvt/homeassistant-gotthard",
+    "integration_type": "service",
+    "iot_class": "cloud_polling",
+    "issue_tracker": "https://github.com/janvt/homeassistant-gotthard/issues",
+    "requirements": [],
+    "version": "0.1.0"
+}

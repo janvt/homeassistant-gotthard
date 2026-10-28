@@ -1,0 +1,123 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Written by hand after the shape of FEDRO's feed, not recorded: the figures are
+  in the German texts only, as in the feed.  Each record is a case of the tests.
+-->
+<soap:Envelope xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/">
+  <soap:Body>
+    <d2LogicalModel xmlns="http://datex2.eu/schema/2/2_0"
+                    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                    modelBaseVersion="2">
+      <payloadPublication xsi:type="SituationPublication" lang="de">
+        <publicationTime>2026-10-28T11:58:00+01:00</publicationTime>
+        <situation id="north">
+          <situationRecord id="north-queue" xsi:type="AbnormalTraffic">
+            <validity><validityStatus>active</validityStatus></validity>
+            <abnormalTrafficType>stationaryTraffic</abnormalTrafficType>
+            <generalPublicComment><comment><values>
+              <value lang="de">Freigegeben: A2 Luzern -&gt; Gotthard zwischen Anschluss Wassen und Anschluss Göschenen Sachlage: Stau Länge [km] 4.0 Ursache: Verkehrsüberlastung Zusatz 1: Zeitverlust Anz. [min] 40</value>
+              <value lang="fr">Libéré: A2 Lucerne -&gt; Gothard entre jonction Wassen et jonction Göschenen Situation: bouchon longueur [km] 4.0</value>
+            </values></comment></generalPublicComment>
+          </situationRecord>
+          <!-- Longer, but with no time lost: the north portal's worst of both. -->
+          <situationRecord id="north-queue-longer" xsi:type="AbnormalTraffic">
+            <validity><validityStatus>active</validityStatus></validity>
+            <abnormalTrafficType>queuingTraffic</abnormalTrafficType>
+            <generalPublicComment><comment><values>
+              <value lang="de">Freigegeben: A2 Luzern -&gt; Gotthard zwischen Anschluss Amsteg und Anschluss Göschenen Sachlage: Stau Länge [km] 7,5 Ursache: Verkehrsüberlastung</value>
+            </values></comment></generalPublicComment>
+          </situationRecord>
+          <situationRecord id="north-rescinded" xsi:type="AbnormalTraffic">
+            <validity><validityStatus>active</validityStatus></validity>
+            <abnormalTrafficType>stationaryTraffic</abnormalTrafficType>
+            <generalPublicComment><comment><values>
+              <value lang="de">Aufgehoben: A2 Luzern -&gt; Gotthard zwischen Anschluss Wassen und Anschluss Göschenen Sachlage: Stau Länge [km] 12.0 Zusatz 1: Zeitverlust Anz. [min] 120</value>
+            </values></comment></generalPublicComment>
+          </situationRecord>
+        </situation>
+        <situation id="south">
+          <!-- A queue with only the time it costs. -->
+          <situationRecord id="south-queue" xsi:type="AbnormalTraffic">
+            <validity><validityStatus>active</validityStatus></validity>
+            <abnormalTrafficType>stationaryTraffic</abnormalTrafficType>
+            <generalPublicComment><comment><values>
+              <value lang="de">Freigegeben: A2 Chiasso -&gt; Gotthard zwischen Anschluss Quinto und Dosierstelle Airolo Sachlage: Stau Ursache: Verkehrsüberlastung Zusatz 1: Zeitverlust Anz. [min] 15</value>
+            </values></comment></generalPublicComment>
+          </situationRecord>
+          <!-- Leaving the Gotthard, far from it: not about it. -->
+          <situationRecord id="ticino-queue" xsi:type="AbnormalTraffic">
+            <validity><validityStatus>active</validityStatus></validity>
+            <abnormalTrafficType>stationaryTraffic</abnormalTrafficType>
+            <generalPublicComment><comment><values>
+              <value lang="de">Freigegeben: A2 Gotthard -&gt; Chiasso zwischen Anschluss Lugano-Nord und Anschluss Melide Sachlage: Stau Länge [km] 3.0 Zusatz 1: Zeitverlust Anz. [min] 30</value>
+            </values></comment></generalPublicComment>
+          </situationRecord>
+        </situation>
+        <situation id="tunnel">
+          <!-- Roadworks in the tunnel: a message, but neither a queue nor a closure. -->
+          <situationRecord id="tunnel-works" xsi:type="MaintenanceWorks">
+            <validity><validityStatus>active</validityStatus></validity>
+            <generalPublicComment><comment><values>
+              <value lang="de">Freigegeben: A2 Chiasso &lt;-&gt; Gotthard Tunnel Gotthard-Tunnel Sachlage: Verkehrsbehinderung Baustelle, Länge [km] 0.3 Zusatz 1: vorübergehende Begrenzung der Breite</value>
+              <value lang="it">Approvato: A2 Chiasso &lt;-&gt; Gottardo Galleria del San Gottardo Situazione: cantiere</value>
+            </values></comment></generalPublicComment>
+          </situationRecord>
+          <situationRecord id="closure-later" xsi:type="RoadOrCarriagewayOrLaneManagement">
+            <validity>
+              <validityStatus>definedByValidityTimeSpec</validityStatus>
+              <validityTimeSpecification>
+                <overallStartTime>2026-10-28T23:00:00+01:00</overallStartTime>
+                <overallEndTime>2026-10-29T01:00:00+01:00</overallEndTime>
+              </validityTimeSpecification>
+            </validity>
+            <generalPublicComment><comment><values>
+              <value lang="de">Freigegeben: A2 Chiasso &lt;-&gt; Luzern zwischen Anschluss Göschenen und Anschluss Airolo Sachlage: Tunnel gesperrt Ursache: Ausnahmetransport</value>
+            </values></comment></generalPublicComment>
+          </situationRecord>
+          <situationRecord id="closure-much-later" xsi:type="RoadOrCarriagewayOrLaneManagement">
+            <validity>
+              <validityStatus>definedByValidityTimeSpec</validityStatus>
+              <validityTimeSpecification>
+                <validPeriod>
+                  <startOfPeriod>2026-11-02T20:00:00+01:00</startOfPeriod>
+                  <endOfPeriod>2026-11-03T05:00:00+01:00</endOfPeriod>
+                </validPeriod>
+              </validityTimeSpecification>
+            </validity>
+            <generalPublicComment><comment><values>
+              <value lang="de">Freigegeben: A2 Chiasso &lt;-&gt; Luzern Tunnel Gotthard-Tunnel Sachlage: gesperrt Ursache: Unterhaltsarbeiten</value>
+            </values></comment></generalPublicComment>
+          </situationRecord>
+          <situationRecord id="closure-past" xsi:type="RoadOrCarriagewayOrLaneManagement">
+            <validity>
+              <validityStatus>definedByValidityTimeSpec</validityStatus>
+              <validityTimeSpecification>
+                <overallStartTime>2026-10-27T20:00:00+01:00</overallStartTime>
+                <overallEndTime>2026-10-28T05:00:00+01:00</overallEndTime>
+              </validityTimeSpecification>
+            </validity>
+            <generalPublicComment><comment><values>
+              <value lang="de">Freigegeben: A2 Chiasso &lt;-&gt; Luzern Tunnel Gotthard-Tunnel Sachlage: gesperrt Ursache: Unterhaltsarbeiten</value>
+            </values></comment></generalPublicComment>
+          </situationRecord>
+        </situation>
+        <situation id="pass">
+          <situationRecord id="pass-closed" xsi:type="RoadOrCarriagewayOrLaneManagement">
+            <validity><validityStatus>active</validityStatus></validity>
+            <generalPublicComment><comment><values>
+              <value lang="de">Freigegeben: H2 Airolo &lt;-&gt; Göschenen Pass Gotthard-Pass Sachlage: gesperrt Ursache: Wintersperre</value>
+            </values></comment></generalPublicComment>
+          </situationRecord>
+        </situation>
+        <situation id="elsewhere">
+          <situationRecord id="zurich-accident" xsi:type="Accident">
+            <validity><validityStatus>active</validityStatus></validity>
+            <generalPublicComment><comment><values>
+              <value lang="de">Freigegeben: A1 Bern -&gt; Zürich zwischen Verzweigung Limmattal und Anschluss Dietikon Sachlage: Unfall</value>
+            </values></comment></generalPublicComment>
+          </situationRecord>
+        </situation>
+      </payloadPublication>
+    </d2LogicalModel>
+  </soap:Body>
+</soap:Envelope>
