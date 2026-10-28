@@ -57,10 +57,33 @@ def test_messages_are_the_current_ones_about_the_gotthard():
     ]
 
 
-def test_messages_in_other_languages():
+def test_languages_of_a_text_are_apart():
     message = parse(FIXTURE, NOW).messages[0]
+    assert message.text.startswith("Freigegeben: A2 Luzern")
+    assert message.text.endswith("[min] 40")
     assert message.in_language("fr").startswith("Libéré: A2 Lucerne")
+    assert message.in_language("it").startswith("Approvato: A2 Luzern")
     assert message.in_language("en") == message.text
+
+
+def test_languages_given_apart():
+    tunnel_works = parse(FIXTURE, NOW).messages[3]
+    assert tunnel_works.in_language("it").startswith("Approvato: A2 Chiasso")
+
+
+def test_active_messages_only_from_their_start():
+    later = datetime.datetime(2026, 11, 2, 9, 0, tzinfo=CET)
+    assert "andermatt-roadworks" not in ids(parse(FIXTURE, NOW).messages)
+    assert "andermatt-roadworks" in ids(parse(FIXTURE, later).messages)
+
+
+def test_the_pass_closed_at_night():
+    evening = NOW.replace(hour=19)
+    status = parse(FIXTURE, evening)
+    closure = status.messages[ids(status.messages).index("pass-night-closure")]
+    assert closure.situation == "Strecke gesperrt"
+    assert "jusqu'à" in closure.in_language("fr")
+    assert not status.tunnel_closed
 
 
 def test_planned_closures_the_next_first():

@@ -59,29 +59,45 @@ REQUEST = """\
   </soap:Body>
 </soap:Envelope>"""
 
-# A message about the Gotthard: its tunnel or pass, a portal town, or a road
-# leading to it ("A2 Luzern -> Gotthard").  "A2 Gotthard -> Chiasso" leads away
-# and is only kept if it is near a portal.
-ABOUT_GOTTHARD = re.compile(
-    r"Gotthard-(?:Tunnel|Pass)|Göschenen|Airolo|->\s*Gotthard\b", re.IGNORECASE
+# A message's text holds each language in turn, each opening with its status:
+# "Freigegeben: … Libéré: … Approvato: …".
+LANGUAGES = {
+    "Freigegeben": "de",
+    "Aufgehoben": "de",
+    "Libéré": "fr",
+    "Révoqué": "fr",
+    "Approvato": "it",
+    "Revocato": "it",
+}
+LANGUAGE_START = re.compile(rf"\s+(?=(?:{'|'.join(LANGUAGES)}):)")
+RESCINDED = ("Aufgehoben",)
+# "Freigegeben: A2 Luzern -> Gotthard zwischen Anschluss Wassen und Anschluss
+# Göschenen Sachlage: …": the road, its direction, and where on it.  Every
+# message on the A2 is labelled "… -> Gotthard" or "Gotthard -> …", so only
+# where it is tells whether it is about the Gotthard.
+HEADER = re.compile(
+    r"^\w+:\s*(?:(?P<road>[AH]\d+)\s+)?(?P<origin>.+?)\s*(?P<arrow><->|->)\s*"
+    r"(?P<destination>\S+)\s*(?P<location>.*?)\s*Sachlage:"
 )
-TOWARDS_GOTTHARD = re.compile(r"(?<!<)->\s*Gotthard\b", re.IGNORECASE)
-PORTALS = {NORTH: re.compile(r"Göschenen", re.I), SOUTH: re.compile(r"Airolo", re.I)}
+NEAR_GOTTHARD = re.compile(
+    r"Gotthard-(?:Tunnel|Pass)|Göschenen|Airolo|Wassen|Andermatt|Hospental"
+    r"|Motto Bartola"
+)
+PORTALS = {NORTH: re.compile(r"Göschenen"), SOUTH: re.compile(r"Airolo")}
 # What the message says has happened: the text from "Sachlage:" to the next
 # heading.
 SITUATION = re.compile(
-    r"Sachlage:\s*(.*?)(?=\s+(?:Länge|Ursache|Zusatz|Dauer|Verkehrsführung)\b|$)"
+    r"Sachlage:\s*(.*?)(?=\s+(?:Länge|Ursache|Zusatz|Dauer|Verkehrsführung"
+    r"|Empfehlung)\b|$)"
 )
 QUEUE = re.compile(r"\bStau\b|stockender Verkehr", re.IGNORECASE)
 QUEUE_TYPES = ("stationaryTraffic", "queuingTraffic", "slowTraffic")
-# "Tunnel gesperrt", or "gesperrt" alone; not a lane or an exit.
-CLOSED = re.compile(r"^(?:Tunnel |Strasse )?gesperrt\b", re.IGNORECASE)
+# "Strecke gesperrt", "Tunnel gesperrt", or "gesperrt" alone; not a lane, the
+# hard shoulder or an exit.
+CLOSED = re.compile(r"^(?:Strecke |Tunnel |Strasse )?gesperrt\b", re.IGNORECASE)
 TUNNEL = re.compile(r"Gotthard-Tunnel|Göschenen\b.*\bAirolo|Airolo\b.*\bGöschenen")
-# The tunnel's road; the pass road (H2) links the portals too.
-A2 = re.compile(r"(?:^|:\s*)A2\b")
 LENGTH = re.compile(r"Länge \[km\]\s*(\d+(?:[.,]\d+)?)")
 DELAY = re.compile(r"\[min\]\s*(\d+)")
-RESCINDED = ("Aufgehoben",)
 
 
 class DatexError(Exception):
@@ -118,10 +134,31 @@ class Message:
         match = SITUATION.search(self.text)
         return match.group(1).strip() if match else ""
 
+    @property
+    def road(self) -> str:
+        """e.g. "A2", or "" for a road without a number."""
+        match = HEADER.match(self.text)
+        return (match.group("road") or "") if match else ""
+
+    @property
+    def towards_gotthard(self) -> bool:
+        """On a carriageway leading to the Gotthard, not away or both ways."""
+        match = HEADER.match(self.text)
+        return bool(
+            match and match["arrow"] == "->" and match["destination"] == "Gotthard"
+        )
+
+    @property
+    def location(self) -> str:
+        """Where on the road, e.g. "zwischen Anschluss Wassen und …"."""
+        if match := HEADER.match(self.text):
+            return match.group("location")
+        return self.text.partition("Sachlage:")[0]
+
     def is_current(self, now: datetime.datetime) -> bool:
-        if self.status == "active":
-            return True
-        if self.status != "definedByValidityTimeSpec":
+        # The feed has messages "active" before they start: roadworks
+        # announced for next week, say.
+        if self.status not in ("active", "definedByValidityTimeSpec"):
             return False
         return (self.start is None or self.start <= now) and (
             self.end is None or now < self.end
@@ -203,8 +240,9 @@ def parse(document: bytes, now: datetime.datetime) -> GotthardStatus:
     status = GotthardStatus(_time(publication.findtext(f"{DX2}publicationTime")))
     for element in publication.iter(f"{DX2}situationRecord"):
         message = _message(element)
-        text = message.text
-        if text.startswith(RESCINDED) or not ABOUT_GOTTHARD.search(text):
+        if message.text.startswith(RESCINDED) or not NEAR_GOTTHARD.search(
+            message.location
+        ):
             continue
         if _is_tunnel_closure(message):
             if message.is_current(now):
@@ -242,11 +280,15 @@ def _message(element: ET.Element) -> Message:
     texts: dict[str, str] = {}
     for comment in element.iter(f"{DX2}generalPublicComment"):
         for value in comment.iter(f"{DX2}value"):
-            if value.text and value.text.strip():
-                language = value.get("lang", "")
-                text = " ".join(value.text.split())
+            if not (value.text and value.text.strip()):
+                continue
+            # The feed doubles apostrophes in places ("jusqu''à").
+            text = " ".join(value.text.split()).replace("''", "'")
+            for part in LANGUAGE_START.split(text):
+                opening = part.partition(":")[0]
+                language = LANGUAGES.get(opening) or value.get("lang", "")
                 texts[language] = (
-                    f"{texts[language]} {text}" if language in texts else text
+                    f"{texts[language]} {part}" if language in texts else part
                 )
 
     return Message(
@@ -271,21 +313,23 @@ def _time(text: str | None) -> datetime.datetime | None:
 
 
 def _is_tunnel_closure(message: Message) -> bool:
+    # The pass road (H2) links the portals too.
     return bool(
-        A2.search(message.text)
-        and TUNNEL.search(message.text)
+        message.road == "A2"
+        and TUNNEL.search(message.location)
         and CLOSED.search(message.situation)
     )
 
 
 def _queue_portal(message: Message) -> str | None:
     """The portal the message's queue is before, if it is about one."""
-    if not (
-        QUEUE.search(message.situation) or message.abnormal_traffic in QUEUE_TYPES
-    ) or not TOWARDS_GOTTHARD.search(message.text):
+    if (
+        not (QUEUE.search(message.situation) or message.abnormal_traffic in QUEUE_TYPES)
+        or not message.towards_gotthard
+    ):
         return None
     for portal, name in PORTALS.items():
-        if name.search(message.text):
+        if name.search(message.location):
             return portal
     return None
 

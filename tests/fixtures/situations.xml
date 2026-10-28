@@ -1,7 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--
-  Written by hand after the shape of FEDRO's feed, not recorded: the figures are
-  in the German texts only, as in the feed.  Each record is a case of the tests.
+  Written by hand after the shape of FEDRO's feed: the figures are in the texts
+  only, and each text holds German, French and Italian in turn.  The texts of
+  "far-roadworks", "andermatt-roadworks", "pass-night-closure" and "nufenen"
+  are the live feed's of 2026-10-28; their times are made up.  Each record is a
+  case of the tests.
 -->
 <soap:Envelope xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/">
   <soap:Body>
@@ -15,8 +18,7 @@
             <validity><validityStatus>active</validityStatus></validity>
             <abnormalTrafficType>stationaryTraffic</abnormalTrafficType>
             <generalPublicComment><comment><values>
-              <value lang="de">Freigegeben: A2 Luzern -&gt; Gotthard zwischen Anschluss Wassen und Anschluss Göschenen Sachlage: Stau Länge [km] 4.0 Ursache: Verkehrsüberlastung Zusatz 1: Zeitverlust Anz. [min] 40</value>
-              <value lang="fr">Libéré: A2 Lucerne -&gt; Gothard entre jonction Wassen et jonction Göschenen Situation: bouchon longueur [km] 4.0</value>
+              <value lang="de">Freigegeben: A2 Luzern -&gt; Gotthard zwischen Anschluss Wassen und Anschluss Göschenen Sachlage: Stau Länge [km] 4.0 Ursache: Verkehrsüberlastung Zusatz 1: Zeitverlust Anz. [min] 40 Libéré: A2 Lucerne -&gt; St-Gothard entre Jonction autoroutière Wassen et Jonction autoroutière Göschenen Situation: bouchon longueur [km] 4.0 Raison: surcharge de trafic Complément 1: retards Nbre. [min] 40 Approvato: A2 Luzern -&gt; S. Gottardo tra Svincolo autostradale Wassen E Svincolo autostradale Göschenen Situazione: colonna lunghezza [km] 4.0 Causa: traffico congestionato Aggiunta 1: ritardi No. [min] 40</value>
             </values></comment></generalPublicComment>
           </situationRecord>
           <!-- Longer, but with no time lost: the north portal's worst of both. -->
@@ -106,6 +108,48 @@
             <validity><validityStatus>active</validityStatus></validity>
             <generalPublicComment><comment><values>
               <value lang="de">Freigegeben: H2 Airolo &lt;-&gt; Göschenen Pass Gotthard-Pass Sachlage: gesperrt Ursache: Wintersperre</value>
+            </values></comment></generalPublicComment>
+          </situationRecord>
+        </situation>
+        <situation id="live">
+          <!-- Labelled "-> Gotthard" as every A2 message, but in Ticino. -->
+          <situationRecord id="far-roadworks" xsi:type="MaintenanceWorks">
+            <validity><validityStatus>active</validityStatus></validity>
+            <generalPublicComment><comment><values>
+              <value lang="de">Freigegeben: A2 Chiasso -&gt; Gotthard zwischen Anschluss Lugano-Nord und Anschluss Rivera Sachlage: Verkehrsbehinderung Baustelle, Länge [km] 0.8 Verkehrsführung: Fahrbahnverengung auf einen Fahrstreifen verengt Zusatz 1: vorübergehende Begrenzung der Breite Fahrbahnbreite [m] 3.5 Dauer: nachts voraussichtlich 28.10.2026 21:30 bis 29.10.2026 04:00 ID117721 Libéré: A2 Chiasso -&gt; St-Gothard entre Jonction autoroutière Lugano-Nord et Jonction autoroutière Rivera Situation: trafic perturbé travaux, longueur [km] 0.8 Approvato: A2 Chiasso -&gt; S. Gottardo tra Svincolo autostradale Lugano Nord E Svincolo autostradale Rivera Situazione: problemi di traffico cantiere, lunghezza [km] 0.8</value>
+            </values></comment></generalPublicComment>
+          </situationRecord>
+          <!-- "Active" before it starts. -->
+          <situationRecord id="andermatt-roadworks" xsi:type="MaintenanceWorks">
+            <validity>
+              <validityStatus>active</validityStatus>
+              <validityTimeSpecification>
+                <overallStartTime>2026-11-02T08:00:00+01:00</overallStartTime>
+                <overallEndTime>2026-12-31T17:00:00+01:00</overallEndTime>
+              </validityTimeSpecification>
+            </validity>
+            <generalPublicComment><comment><values>
+              <value lang="de">Freigegeben: H2 Airolo &lt;-&gt; Göschenen zwischen Ortschaft Andermatt und Ortschaft Hospental Sachlage: Verkehrsbehinderung Baustelle, Länge [km] 0.5 Zusatz 1: vorübergehende Begrenzung der Breite Fahrbahnbreite [m] 4.0 Libéré: H2 Airolo &lt;-&gt; Göschenen entre Localité Andermatt et Localité Hospental Situation: trafic perturbé travaux, longueur [km] 0.5 Approvato: H2 Airolo &lt;-&gt; Göschenen tra Luogo Andermatt E Luogo Hospental Situazione: problemi di traffico cantiere, lunghezza [km] 0.5</value>
+            </values></comment></generalPublicComment>
+          </situationRecord>
+          <!-- The pass at night: closed, but it is not the tunnel. -->
+          <situationRecord id="pass-night-closure" xsi:type="RoadOrCarriagewayOrLaneManagement">
+            <validity>
+              <validityStatus>active</validityStatus>
+              <validityTimeSpecification>
+                <overallStartTime>2026-10-28T18:00:00+01:00</overallStartTime>
+                <overallEndTime>2026-10-29T08:00:00+01:00</overallEndTime>
+              </validityTimeSpecification>
+            </validity>
+            <generalPublicComment><comment><values>
+              <value lang="de">Freigegeben: H2 Airolo &lt;-&gt; Göschenen zwischen Anschluss Airolo-Nufenen und Ortschaft Hospental Sachlage: Strecke gesperrt Dauer: voraussichtlich 28.10.2026 18:00 bis 29.10.2026 08:00 Empfehlung: Winterausrüstung empfohlen aus Sicherheitsgründen infolge Witterung Libéré: H2 Airolo &lt;-&gt; Göschenen entre Jonction autoroutière Airolo-Nufenen et Localité Hospental Situation: fermé Durée: probable 28.10.2026 18:00 jusqu''à 29.10.2026 08:00 Recommandation: équipement d'hiver recommandé Approvato: H2 Airolo &lt;-&gt; Göschenen tra Svincolo autostradale Airolo-Nufenen E Luogo Hospental Situazione: chiusa Durata: probabile 28.10.2026 18:00 fino 29.10.2026 08:00 Raccomandazione: attrezzatura invernale consigliata</value>
+            </values></comment></generalPublicComment>
+          </situationRecord>
+          <!-- Another pass, from Airolo. -->
+          <situationRecord id="nufenen" xsi:type="RoadOrCarriagewayOrLaneManagement">
+            <validity><validityStatus>active</validityStatus></validity>
+            <generalPublicComment><comment><values>
+              <value lang="de">Freigegeben: Ulrichen &lt;-&gt; Airolo Pass Nufenen-Pass Sachlage: Strecke gesperrt Dauer: nachts voraussichtlich 27.10.2026 18:00 Libéré: Ulrichen &lt;-&gt; Airolo Col Col du Nufenen Situation: fermé Approvato: Ulrichen &lt;-&gt; Airolo Passo Passo della Novena Situazione: chiusa</value>
             </values></comment></generalPublicComment>
           </situationRecord>
         </situation>
