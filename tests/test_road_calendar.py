@@ -22,13 +22,17 @@ def calendar(key, restrictions=False, now=NOW, end=FORTNIGHT):
     return events(key, status.calendars[key], now, end, now, restrictions, "en")
 
 
-def test_a_closure_at_night_is_an_event_each_night():
+def test_a_closure_over_several_nights_is_one_event():
+    """22:00 to 05:00 on 2 and 3 November: one event from the first night's
+    start to the last's end, its hours in its title. An event a night made
+    the month view a stack of overlapping bars."""
     nights = [e for e in calendar("axenstrasse") if e.uid.startswith("axen-nights")]
     assert [(e.start, e.end) for e in nights] == [
-        (local(2026, 11, 2, 22, 0), local(2026, 11, 3, 5, 0)),
-        (local(2026, 11, 3, 22, 0), local(2026, 11, 4, 5, 0)),
+        (local(2026, 11, 2, 22, 0), local(2026, 11, 4, 5, 0))
     ]
-    assert nights[0].summary == "Axenstrasse (A4) closed: Flüelen-Tunnel – Sisikon"
+    assert nights[0].summary == (
+        "Axenstrasse (A4) closed nightly 22:00–05:00: Flüelen-Tunnel – Sisikon"
+    )
     assert nights[0].description.startswith(
         "Cause: Baustelle\nLength: 7.3 km\nAdvice: eine lokale"
     )
@@ -87,10 +91,13 @@ def test_without_times_the_period_comes_from_the_text():
 
 def test_directions_and_both_ways():
     a2 = {e.uid.split("-2026")[0]: e.summary for e in calendar("A2")}
-    assert (
-        a2["a2-north"] == "A2 northbound (to Basel) closed: Stans-Nord – Hergiswil Süd"
+    assert a2["a2-north"] == (
+        "A2 northbound (to Basel) closed nightly 22:00–05:00: "
+        "Stans-Nord – Hergiswil Süd"
     )
-    assert a2["a2-both-ways"] == "A2 closed: Luzern-Zentrum – Sonnenberg-Tunnel"
+    assert a2["a2-both-ways"] == (
+        "A2 closed nightly 22:00–05:00: Luzern-Zentrum – Sonnenberg-Tunnel"
+    )
 
 
 def test_the_pass_has_its_own_calendar():
@@ -107,14 +114,14 @@ def test_only_events_in_the_range_asked():
     ]
 
 
-def test_a_night_across_the_change_to_winter_time():
-    """25 October 2026: 22:00 to 05:00 is still 22:00 to 05:00 local."""
+def test_nights_across_the_change_to_winter_time():
+    """25 October 2026: from 22:00 on the 24th to 05:00 on the 26th, local."""
+    from dataclasses import replace
+
     status = parse(FIXTURE, NOW)
     message = next(
         m for m in status.calendars["axenstrasse"] if m.identifier == "axen-nights"
     )
-    from dataclasses import replace
-
     message = replace(
         message, start=local(2026, 10, 24, 22, 0), end=local(2026, 10, 26, 5, 0)
     )
@@ -127,7 +134,9 @@ def test_a_night_across_the_change_to_winter_time():
         False,
         "en",
     )
-    assert [(e.start.hour, e.end.hour) for e in out] == [(22, 5), (22, 5)]
+    assert [(e.start, e.end) for e in out] == [
+        (local(2026, 10, 24, 22, 0), local(2026, 10, 26, 5, 0))
+    ]
 
 
 def test_stretch():
@@ -164,8 +173,9 @@ def test_one_closure_published_per_stretch_is_one_event():
         "axenstrasse", [tunnel, stretch_message], NOW, FORTNIGHT, NOW, False, "en"
     )
     assert [e.summary for e in out] == [
-        "Axenstrasse (A4) closed: Flüelen-Tunnel, Flüelen-Tunnel – Sisikon"
-    ] * 2
+        "Axenstrasse (A4) closed nightly 22:00–05:00: "
+        "Flüelen-Tunnel, Flüelen-Tunnel – Sisikon"
+    ]
     assert out[0].uid.startswith("axen-tunnel+axen-nights-")
 
 

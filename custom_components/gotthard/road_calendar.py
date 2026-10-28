@@ -117,13 +117,17 @@ def _heading(key: str, message: Message) -> str:
         label = f"{label} {direction}"
     if is_closure(message):
         what = "closed"
+        if daily := message.daily:
+            # One event over all its nights (or days): its hours say when.
+            how = "nightly" if daily[1] <= daily[0] else "daily"
+            what = f"closed {how} {daily[0]:%H:%M}–{daily[1]:%H:%M}"
     else:
         # The restriction itself: how traffic is led, or what has happened.
         guidance = GUIDANCE.search(message.text)
         what = (guidance.group(1) if guidance else message.situation).rstrip(", ")
         # "Verkehrsbehinderung Baustelle": the second word says it.
         what = re.sub(r"^Verkehrsbehinderung\s+", "", what) or "Verkehrsbehinderung"
-    return f"{label} {what}" if what == "closed" else f"{label}: {what}"
+    return f"{label} {what}" if what.startswith("closed") else f"{label}: {what}"
 
 
 def description(message: Message, language: str) -> str:
@@ -165,10 +169,11 @@ def occurrences(
     end: datetime.datetime,
     now: datetime.datetime,
 ) -> list[tuple[datetime.datetime, datetime.datetime]]:
-    """When the message applies between `start` and `end`: once, or for a
-    closure only at night or by day, once each day of its period. A
-    restriction is once over its period, whatever its hours: works on a
-    road for years would be in every day of the calendar."""
+    """When the message applies, if that's between `start` and `end`: one event
+    from its first hour to its last. A closure only at night or by day runs
+    from its first night's start to its last night's end, its hours in its
+    title: an event a night made the month view a stack of overlapping bars.
+    A restriction on daily hours is one event over its period too."""
     first, last = period(message)
     # Without a start: from today.
     first = first or now.astimezone(SWITZERLAND).replace(
@@ -183,10 +188,22 @@ def occurrences(
         )
     if daily is None:
         return [(first, last)] if first < end and last > start else []
+    windows = _windows(first, last, daily, now)
+    if not windows:
+        return []
+    begin, finish = windows[0][0], windows[-1][1]
+    return [(begin, finish)] if begin < end and finish > start else []
+
+
+def _windows(
+    first, last, daily, now
+) -> list[tuple[datetime.datetime, datetime.datetime]]:
+    """Each night (or day) of a closure's period, up to HORIZON from now."""
     out = []
-    day = max(first, start - datetime.timedelta(days=1)).astimezone(SWITZERLAND)
-    day = day.replace(hour=0, minute=0, second=0, microsecond=0)
-    stop = min(end, now + HORIZON, last)
+    day = first.astimezone(SWITZERLAND).replace(
+        hour=0, minute=0, second=0, microsecond=0
+    )
+    stop = min(now + HORIZON, last)
     while day < stop:
         window = day.replace(hour=daily[0].hour, minute=daily[0].minute)
         window_end = day.replace(hour=daily[1].hour, minute=daily[1].minute)
@@ -196,12 +213,7 @@ def occurrences(
                 hour=daily[1].hour, minute=daily[1].minute
             )
         window_end = min(window_end, last)
-        if (
-            window >= first
-            and window < window_end
-            and window < end
-            and window_end > start
-        ):
+        if window >= first and window < window_end:
             out.append((window, window_end))
         # Days as dates, so a change to summer time keeps the hours.
         day = datetime.datetime.combine(

@@ -177,7 +177,7 @@ async def test_calendars(hass, loaded):
     assert axen.attributes["friendly_name"] == "National roads Axenstrasse (A4)"
     assert (
         axen.attributes["message"]
-        == "Axenstrasse (A4) closed: Flüelen-Tunnel – Sisikon"
+        == "Axenstrasse (A4) closed nightly 22:00–05:00: Flüelen-Tunnel – Sisikon"
     )
     result = await hass.services.async_call(
         "calendar",
@@ -189,7 +189,9 @@ async def test_calendars(hass, loaded):
     summaries = [
         e["summary"] for e in result["calendar.national_roads_axenstrasse"]["events"]
     ]
-    assert summaries.count("Axenstrasse (A4) closed: Flüelen-Tunnel – Sisikon") == 2
+    assert summaries == [
+        "Axenstrasse (A4) closed nightly 22:00–05:00: Flüelen-Tunnel – Sisikon"
+    ]
     assert hass.states.get("calendar.gotthard_tunnel_closures") is not None
     for key in ("gotthard_pass", "a2", "a4"):
         assert hass.states.get(f"calendar.national_roads_{key}") is not None
