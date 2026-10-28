@@ -134,3 +134,83 @@ def test_stretch():
     status = parse(FIXTURE, NOW)
     by_id = {m.identifier: m for m in status.calendars["axenstrasse"]}
     assert stretch(by_id["axen-nights"]) == "Flüelen-Tunnel – Sisikon"
+
+
+# ── one event, not several ──────────────────────────────────────────────────
+def _axen_nights():
+    status = parse(FIXTURE, NOW)
+    return next(
+        m for m in status.calendars["axenstrasse"] if m.identifier == "axen-nights"
+    )
+
+
+def test_one_closure_published_per_stretch_is_one_event():
+    """FEDRO publishes the Axenstrasse's night closure twice: the Flüelen
+    tunnel, and on from it to Sisikon. Same nights, same kind: one event."""
+    from dataclasses import replace
+
+    stretch_message = _axen_nights()
+    tunnel = replace(
+        stretch_message,
+        identifier="axen-tunnel",
+        texts={
+            "de": stretch_message.text.replace(
+                "zwischen Tunnel Flüelen-Tunnel und Ortschaft Sisikon",
+                "Tunnel Flüelen-Tunnel",
+            )
+        },
+    )
+    out = events(
+        "axenstrasse", [tunnel, stretch_message], NOW, FORTNIGHT, NOW, False, "en"
+    )
+    assert [e.summary for e in out] == [
+        "Axenstrasse (A4) closed: Flüelen-Tunnel, Flüelen-Tunnel – Sisikon"
+    ] * 2
+    assert out[0].uid.startswith("axen-tunnel+axen-nights-")
+
+
+def test_a_restriction_on_daily_hours_is_one_event():
+    """Works for years, "nachts" 07:00–17:00: one event over the period, not
+    one in every day of the calendar; the hours in its description."""
+    from dataclasses import replace
+
+    works = next(
+        m
+        for m in parse(FIXTURE, NOW).calendars["tunnel"]
+        if m.identifier == "tunnel-works"
+    )
+    works = replace(
+        works,
+        start=local(2023, 8, 14, 7, 0),
+        end=local(2026, 12, 31, 17, 0),
+        texts={
+            "de": works.text
+            + " Dauer: nachts voraussichtlich 14.08.2023 07:00 bis 31.12.2026 17:00"
+        },
+    )
+    out = events("tunnel", [works], NOW, FORTNIGHT, NOW, True, "en")
+    assert [(e.start, e.end) for e in out] == [
+        (local(2023, 8, 14, 7, 0), local(2026, 12, 31, 17, 0))
+    ]
+    assert "Daily: 07:00–17:00" in out[0].description
+
+
+def test_a_part_ends_at_a_heading_with_its_colon():
+    """ "Verkehrsführung: veränderte Verkehrsführung" was cut to "veränderte"."""
+    from dataclasses import replace
+
+    works = next(
+        m
+        for m in parse(FIXTURE, NOW).calendars["tunnel"]
+        if m.identifier == "tunnel-works"
+    )
+    works = replace(
+        works,
+        texts={
+            "de": works.text.replace(
+                "Zusatz 1:", "Verkehrsführung: veränderte Verkehrsführung Zusatz 1:"
+            )
+        },
+    )
+    out = events("tunnel", [works], NOW, FORTNIGHT, NOW, True, "en")
+    assert out[0].summary.startswith("Gotthard tunnel: veränderte Verkehrsführung:")

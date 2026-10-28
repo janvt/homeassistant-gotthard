@@ -67,7 +67,10 @@ is on one of them only: the tunnel's aren't on the A2's, nor the Axenstrasse's
 on the A4's. Each is an event, "Axenstrasse (A4) closed: Flüelen-Tunnel –
 Sisikon", with its cause, its length, any detour and the whole message in its
 description. A closure only at night or by day is an event each night or day
-of its period. One with no end announced, as for an accident, and often never
+of its period; a restriction is one event over its period, with its daily
+hours in the description. FEDRO publishes one closure as several messages, one
+per stretch or worksite: those at the same times are one event, naming every
+stretch. One with no end announced, as for an accident, and often never
 updated, is on the day it started only (a night closure, its first night), and
 says "(no end announced)".
 

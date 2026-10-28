@@ -20,6 +20,7 @@ from dataclasses import dataclass
 from custom_components.gotthard.const import SOUTH
 from custom_components.gotthard.datex import (
     BOTH,
+    HEADINGS,
     ROADS,
     SWITZERLAND,
     Message,
@@ -45,9 +46,7 @@ PLACE_KINDS = re.compile(
     r"Anschluss|Ortschaft|Tunnel|Parkplatz|Zollstation|Raststätte|Pass|"
     r"Dosierstelle|Verzweigung)\s+"
 )
-PART = (
-    r"\s*(.*?)(?=\s+(?:Länge|Ursache|Zusatz \d|Dauer|Verkehrsführung|Empfehlung)\b|$)"
-)
+PART = r"\s*(.*?)(?=\s+" + HEADINGS + r"|$)"
 CAUSE = re.compile(r"Ursache:" + PART)
 GUIDANCE = re.compile(r"Verkehrsführung:" + PART)
 ADVICE = re.compile(r"Empfehlung:" + PART)
@@ -105,6 +104,14 @@ def direction_label(message: Message) -> str:
 
 
 def summary(key: str, message: Message) -> str:
+    heading = _heading(key, message)
+    where = stretch(message)
+    text = f"{heading}: {where}" if where else heading
+    return f"{text} ({NO_END})" if period(message)[1] is None else text
+
+
+def _heading(key: str, message: Message) -> str:
+    """ "Axenstrasse (A4) closed", "A2 northbound (to Basel): Baustelle"."""
     label = LABELS[key]
     if key in ROADS and (direction := direction_label(message)):
         label = f"{label} {direction}"
@@ -116,10 +123,7 @@ def summary(key: str, message: Message) -> str:
         what = (guidance.group(1) if guidance else message.situation).rstrip(", ")
         # "Verkehrsbehinderung Baustelle": the second word says it.
         what = re.sub(r"^Verkehrsbehinderung\s+", "", what) or "Verkehrsbehinderung"
-    where = stretch(message)
-    text = f"{label} {what}" if what == "closed" else f"{label}: {what}"
-    text = f"{text}: {where}" if where else text
-    return f"{text} ({NO_END})" if period(message)[1] is None else text
+    return f"{label} {what}" if what == "closed" else f"{label}: {what}"
 
 
 def description(message: Message, language: str) -> str:
@@ -132,6 +136,9 @@ def description(message: Message, language: str) -> str:
         lines.append(f"Length: {length.group(1)} km")
     if advice := ADVICE.search(message.text):
         lines.append(f"Advice: {advice.group(1)}")
+    if (daily := message.daily) and not is_closure(message):
+        # A restriction is one event over its period; its hours are here.
+        lines.append(f"Daily: {daily[0]:%H:%M}–{daily[1]:%H:%M}")
     text = re.sub(r"^[^:]+:\s*", "", message.in_language(language))
     return "\n".join([*lines, "", text]).strip()
 
@@ -159,13 +166,15 @@ def occurrences(
     now: datetime.datetime,
 ) -> list[tuple[datetime.datetime, datetime.datetime]]:
     """When the message applies between `start` and `end`: once, or for a
-    closure only at night or by day, once each day of its period."""
+    closure only at night or by day, once each day of its period. A
+    restriction is once over its period, whatever its hours: works on a
+    road for years would be in every day of the calendar."""
     first, last = period(message)
     # Without a start: from today.
     first = first or now.astimezone(SWITZERLAND).replace(
         hour=0, minute=0, second=0, microsecond=0
     )
-    daily = message.daily
+    daily = message.daily if is_closure(message) else None
     if last is None:
         # No end announced, as for an accident, and often never updated: the
         # day it started only (a night closure, its first night).
@@ -210,18 +219,32 @@ def events(
     restrictions: bool,
     language: str,
 ) -> list[Event]:
-    """A calendar's events between `start` and `end`, the first first."""
-    out = [
-        Event(
-            start=s,
-            end=e,
-            summary=summary(key, message),
-            description=description(message, language),
-            location=message.location,
-            uid=f"{message.identifier}-{s.isoformat()}",
+    """A calendar's events between `start` and `end`, the first first.
+
+    FEDRO publishes one closure as several messages, one per stretch or
+    worksite (the Flüelen tunnel, and on to Sisikon): those at the same times
+    and of the same kind are one event, naming every stretch."""
+    groups: dict[tuple, list[tuple[Message, datetime.datetime, datetime.datetime]]] = {}
+    for message in messages:
+        if not (restrictions or is_closure(message)):
+            continue
+        for s, e in occurrences(message, start, end, now):
+            same = (s, e, _heading(key, message), period(message)[1] is None)
+            groups.setdefault(same, []).append((message, s, e))
+    out = []
+    for (s, e, heading, no_end), group in groups.items():
+        stretches = list(dict.fromkeys(filter(None, (stretch(m) for m, _, _ in group))))
+        text = f"{heading}: {', '.join(stretches)}" if stretches else heading
+        out.append(
+            Event(
+                start=s,
+                end=e,
+                summary=f"{text} ({NO_END})" if no_end else text,
+                description="\n\n".join(
+                    dict.fromkeys(description(m, language) for m, _, _ in group)
+                ),
+                location="; ".join(dict.fromkeys(m.location for m, _, _ in group)),
+                uid="+".join(m.identifier for m, _, _ in group) + f"-{s.isoformat()}",
+            )
         )
-        for message in messages
-        if restrictions or is_closure(message)
-        for s, e in occurrences(message, start, end, now)
-    ]
     return sorted(out, key=lambda event: (event.start, event.summary))

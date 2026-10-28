@@ -87,12 +87,12 @@ NEAR_GOTTHARD = re.compile(
     r"|Motto Bartola"
 )
 PORTALS = {NORTH: re.compile(r"Göschenen"), SOUTH: re.compile(r"Airolo")}
+# The parts of a message's text, each opening with one of these. A heading has
+# its colon: "Verkehrsführung: veränderte Verkehrsführung" is one part.
+HEADINGS = r"(?:Länge \[km\]|Ursache:|Zusatz \d:|Dauer:|Verkehrsführung:|Empfehlung:)"
 # What the message says has happened: the text from "Sachlage:" to the next
 # heading.
-SITUATION = re.compile(
-    r"Sachlage:\s*(.*?)(?=\s+(?:Länge|Ursache|Zusatz|Dauer|Verkehrsführung"
-    r"|Empfehlung)\b|$)"
-)
+SITUATION = re.compile(r"Sachlage:\s*(.*?)(?=\s+" + HEADINGS + r"|$)")
 QUEUE = re.compile(r"\bStau\b|stockender Verkehr", re.IGNORECASE)
 QUEUE_TYPES = ("stationaryTraffic", "queuingTraffic", "slowTraffic")
 # "Strecke gesperrt", "Tunnel gesperrt", or "gesperrt" alone; not a lane, the
