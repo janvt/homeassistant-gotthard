@@ -9,6 +9,7 @@ from custom_components.gotthard.const import (
     CONF_API_KEY,
     CONF_COUNTERS,
     CONF_COUNTERS_API_KEY,
+    CONF_RESTRICTIONS,
     DOMAIN,
 )
 from custom_components.gotthard.datex import URL
@@ -93,7 +94,11 @@ async def test_turning_counters_on(hass, entry, feed, counters):
         {CONF_COUNTERS: True, CONF_COUNTERS_API_KEY: " counters-key "},
     )
     assert result["type"] is FlowResultType.CREATE_ENTRY
-    assert entry.options == {CONF_COUNTERS: True, CONF_COUNTERS_API_KEY: "counters-key"}
+    assert entry.options == {
+        CONF_RESTRICTIONS: False,
+        CONF_COUNTERS: True,
+        CONF_COUNTERS_API_KEY: "counters-key",
+    }
 
 
 async def test_counters_key_refused(hass, entry, aioclient_mock):
@@ -112,4 +117,18 @@ async def test_turning_counters_off_keeps_the_key(hass, entry):
     result = await hass.config_entries.options.async_configure(
         result["flow_id"], {CONF_COUNTERS: False, CONF_COUNTERS_API_KEY: "kept"}
     )
-    assert entry.options == {CONF_COUNTERS: False, CONF_COUNTERS_API_KEY: "kept"}
+    assert entry.options == {
+        CONF_RESTRICTIONS: False,
+        CONF_COUNTERS: False,
+        CONF_COUNTERS_API_KEY: "kept",
+    }
+
+
+async def test_restrictions_off_by_default(hass, entry):
+    result = await hass.config_entries.options.async_init(entry.entry_id)
+    schema = {str(key): key for key in result["data_schema"].schema}
+    assert schema[CONF_RESTRICTIONS].default() is False
+    result = await hass.config_entries.options.async_configure(
+        result["flow_id"], {CONF_RESTRICTIONS: True, CONF_COUNTERS: False}
+    )
+    assert entry.options[CONF_RESTRICTIONS] is True

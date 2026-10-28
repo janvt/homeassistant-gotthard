@@ -58,6 +58,22 @@ lane, the hard shoulder or a ramp. One both ways counts in each direction.
 A closure "nachts" or "tagsüber" only counts in those hours of each day of
 its period.
 
+## Calendars
+
+The closures are calendars too, for the Calendar panel, a calendar card or an
+automation: **Tunnel closures** (the Gotthard tunnel) and, on *National
+roads*, **Axenstrasse**, **Gotthard Pass**, **A2** and **A4**. Each closure is
+an event, "Axenstrasse closed: Flüelen-Tunnel – Sisikon", with its cause, its
+length, any detour and the whole message in its description. A closure only at
+night or by day is an event each night or day of its period. One with no end
+announced runs to the end of each day and says "(no end announced)".
+
+Restrictions (a lane, a ramp, roadworks) are many, so they're only in the
+calendars when **Restrictions in the calendars** is turned on in the options.
+
+The feed only has messages current or to come, so the calendars don't keep
+past closures.
+
 ## Traffic counters (opt in)
 
 FEDRO counts the traffic at its stations every minute. Turn them on under

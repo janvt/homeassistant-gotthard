@@ -115,14 +115,32 @@
             "travel_stans_altdorf": {
                 "name": "Travel time Stans → Altdorf"
             }
+        },
+        "calendar": {
+            "calendar_tunnel": {
+                "name": "Tunnel closures"
+            },
+            "calendar_axenstrasse": {
+                "name": "Axenstrasse"
+            },
+            "calendar_gotthard_pass": {
+                "name": "Gotthard Pass"
+            },
+            "calendar_a2": {
+                "name": "A2"
+            },
+            "calendar_a4": {
+                "name": "A4"
+            }
         }
     },
     "options": {
         "step": {
             "init": {
-                "title": "Traffic counters",
-                "description": "Vehicles, lorries and speeds counted every minute at FEDRO's stations on the A2 and A4 around Uri, with a queue forming before each Gotthard portal, traffic on the Axenstrasse and travel times. Off unless turned on here. They need their own free API key for \"Traffic Counters\", from {api_key_url}.",
+                "title": "Options",
+                "description": "Closures of the tunnel, the Axenstrasse, the Gotthard Pass and the A2 and A4 are in their calendars. Restrictions (lanes, ramps, roadworks) are many, and only in them when turned on here.\n\nThe traffic counters: vehicles, lorries and speeds counted every minute at FEDRO's stations on the A2 and A4 around Uri, with a queue forming before each Gotthard portal, traffic on the Axenstrasse and travel times. Off unless turned on here. They need their own free API key for \"Traffic Counters\", from {api_key_url}.",
                 "data": {
+                    "restrictions": "Restrictions in the calendars",
                     "counters": "Traffic counters",
                     "counters_api_key": "Traffic counters API key"
                 }

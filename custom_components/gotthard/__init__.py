@@ -39,7 +39,12 @@ from custom_components.gotthard.datex import (
 )
 
 _LOGGER = logging.getLogger(__name__)
-PLATFORMS = [Platform.BINARY_SENSOR, Platform.CAMERA, Platform.SENSOR]
+PLATFORMS = [
+    Platform.BINARY_SENSOR,
+    Platform.CALENDAR,
+    Platform.CAMERA,
+    Platform.SENSOR,
+]
 
 type GotthardConfigEntry = ConfigEntry[GotthardCoordinator]
 

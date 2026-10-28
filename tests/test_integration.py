@@ -166,3 +166,26 @@ async def test_traffic_derived(hass, with_traffic):
     )
     travel = hass.states.get("sensor.national_roads_travel_time_altdorf_goschenen")
     assert 10 < float(travel.state) < 25
+
+
+async def test_calendars(hass, loaded):
+    axen = hass.states.get("calendar.national_roads_axenstrasse")
+    # The closure with no end, on now.
+    assert axen.state == STATE_ON
+    assert axen.attributes["message"].startswith(
+        "Axenstrasse closed: Flüelen – Sisikon"
+    )
+    result = await hass.services.async_call(
+        "calendar",
+        "get_events",
+        {"entity_id": "calendar.national_roads_axenstrasse", "duration": {"days": 14}},
+        blocking=True,
+        return_response=True,
+    )
+    summaries = [
+        e["summary"] for e in result["calendar.national_roads_axenstrasse"]["events"]
+    ]
+    assert summaries.count("Axenstrasse closed: Flüelen-Tunnel – Sisikon") == 2
+    assert hass.states.get("calendar.gotthard_tunnel_closures") is not None
+    for key in ("gotthard_pass", "a2", "a4"):
+        assert hass.states.get(f"calendar.national_roads_{key}") is not None

@@ -118,6 +118,10 @@ DAILY = re.compile(
     r"(\d\d):(\d\d)\s+bis\s+\d\d\.\d\d\.\d{4}\s+(\d\d):(\d\d)"
 )
 SWITZERLAND = ZoneInfo("Europe/Zurich")
+# The Gotthard Pass: the H2 between Hospental and Airolo.
+GOTTHARD_PASS = re.compile(r"Gotthard-Pass|Hospental|Motto Bartola|Airolo-Nufenen")
+# The calendars, and which messages are on each: (road, location) checks.
+CALENDARS = ("tunnel", "axenstrasse", "gotthard_pass", "A2", "A4")
 
 
 class DatexError(Exception):
@@ -299,6 +303,11 @@ class GotthardStatus:
     )
     # Everything current about the Gotthard.
     messages: list[Message] = field(default_factory=list)
+    # For the calendars: the closures and restrictions current or to come, by
+    # calendar (CALENDARS).
+    calendars: dict[str, list[Message]] = field(
+        default_factory=lambda: {key: [] for key in CALENDARS}
+    )
 
     @property
     def tunnel_closed(self) -> bool:
@@ -363,6 +372,11 @@ def parse(document: bytes, now: datetime.datetime) -> GotthardStatus:
         message = _message(element)
         if message.text.startswith(RESCINDED):
             continue
+        if not is_queue(message) and (
+            message.is_current(now) or message.next_start(now)
+        ):
+            for key in calendars_of(message):
+                status.calendars[key].append(message)
         if message.road in ROADS and _is_closure(message):
             directions = (
                 (NORTH, SOUTH) if message.direction == BOTH else (message.direction,)
@@ -449,6 +463,33 @@ def _at(moment: datetime.datetime, time: datetime.time) -> datetime.datetime:
     local = moment.astimezone(SWITZERLAND)
     at = local.replace(hour=time.hour, minute=time.minute, second=0, microsecond=0)
     return at if at > local else at + datetime.timedelta(days=1)
+
+
+def calendars_of(message: Message) -> list[str]:
+    """The calendars a message is on."""
+    road, location = message.road, message.location
+    return [
+        key
+        for key, on in (
+            ("tunnel", road == "A2" and TUNNEL.search(location)),
+            ("axenstrasse", road == "A4" and AXENSTRASSE.search(location)),
+            ("gotthard_pass", road == "H2" and GOTTHARD_PASS.search(location)),
+            ("A2", road == "A2"),
+            ("A4", road == "A4"),
+        )
+        if on
+    ]
+
+
+def is_queue(message: Message) -> bool:
+    """A queue comes and goes: not for a calendar."""
+    return bool(
+        QUEUE.search(message.situation) or message.abnormal_traffic in QUEUE_TYPES
+    )
+
+
+def is_closure(message: Message) -> bool:
+    return _is_closure(message)
 
 
 def _is_closure(message: Message) -> bool:

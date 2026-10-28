@@ -31,3 +31,7 @@ WEBCAM_REFRESH = datetime.timedelta(minutes=1)
 CONF_COUNTERS = "counters"
 CONF_COUNTERS_API_KEY = "counters_api_key"
 COUNTERS_INTERVAL = datetime.timedelta(minutes=2)
+
+# The calendars show closures; restrictions (lanes, ramps, roadworks) too
+# only when turned on in the options.
+CONF_RESTRICTIONS = "restrictions"

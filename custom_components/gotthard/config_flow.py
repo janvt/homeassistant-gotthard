@@ -25,6 +25,7 @@ from custom_components.gotthard.const import (
     CONF_API_KEY,
     CONF_COUNTERS,
     CONF_COUNTERS_API_KEY,
+    CONF_RESTRICTIONS,
     DOMAIN,
     NAME,
 )
@@ -107,7 +108,8 @@ class GotthardFlowHandler(ConfigFlow, domain=DOMAIN):
 
 
 class GotthardOptionsFlow(OptionsFlow):
-    """The traffic counters: off unless turned on here, with their own key."""
+    """Restrictions in the calendars, and the traffic counters (with their own
+    key): both off unless turned on here."""
 
     async def async_step_init(
         self, user_input: dict[str, Any] | None = None
@@ -132,10 +134,17 @@ class GotthardOptionsFlow(OptionsFlow):
             if not errors:
                 # Turned off, the key is kept for turning them on again.
                 return self.async_create_entry(
-                    data={CONF_COUNTERS: enabled, CONF_COUNTERS_API_KEY: api_key}
+                    data={
+                        CONF_RESTRICTIONS: user_input.get(CONF_RESTRICTIONS, False),
+                        CONF_COUNTERS: enabled,
+                        CONF_COUNTERS_API_KEY: api_key,
+                    }
                 )
         schema = vol.Schema(
             {
+                vol.Required(
+                    CONF_RESTRICTIONS, default=options.get(CONF_RESTRICTIONS, False)
+                ): BooleanSelector(),
                 vol.Required(
                     CONF_COUNTERS, default=options.get(CONF_COUNTERS, False)
                 ): BooleanSelector(),
