@@ -17,7 +17,9 @@ from custom_components.gotthard.const import (
     CONF_API_KEY,
     CONF_COUNTERS,
     CONF_COUNTERS_API_KEY,
+    CONF_RADIUS,
     COUNTERS_INTERVAL,
+    DEFAULT_RADIUS,
     DOMAIN,
     NAME,
     UPDATE_INTERVAL,
@@ -108,7 +110,9 @@ class GotthardCoordinator(DataUpdateCoordinator[GotthardStatus]):
 
     async def _async_update_data(self) -> GotthardStatus:
         try:
-            return await self.datex.async_get_status()
+            return await self.datex.async_get_status(
+                radius_km=self.config_entry.options.get(CONF_RADIUS, DEFAULT_RADIUS)
+            )
         except AuthError as err:
             # Keys expire after six months unless extended.
             raise ConfigEntryAuthFailed(str(err)) from err

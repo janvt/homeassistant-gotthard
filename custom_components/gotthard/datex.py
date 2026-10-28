@@ -30,6 +30,7 @@ from zoneinfo import ZoneInfo
 import aiohttp
 
 from custom_components.gotthard.const import NORTH, SOUTH, USER_AGENT
+from custom_components.gotthard.locations import distance
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -143,6 +144,8 @@ class Message:
     start: datetime.datetime | None
     end: datetime.datetime | None
     texts: dict[str, str]  # by language
+    # Its Alert-C location codes, from the first to the last.
+    codes: tuple[int, ...] = ()
 
     @property
     def text(self) -> str:
@@ -327,13 +330,13 @@ class Datex:
         self._api_key = api_key
 
     async def async_get_status(
-        self, now: datetime.datetime | None = None
+        self, now: datetime.datetime | None = None, radius_km: float = 0
     ) -> GotthardStatus:
         document = await self._async_pull()
         now = now or datetime.datetime.now(datetime.UTC)
         # Parsing all of Switzerland's messages takes a moment.
         return await asyncio.get_running_loop().run_in_executor(
-            None, parse, document, now
+            None, parse, document, now, radius_km
         )
 
     async def _async_pull(self) -> bytes:
@@ -356,8 +359,12 @@ class Datex:
             raise DatexError(f"Cannot reach {URL}: {err!r}") from err
 
 
-def parse(document: bytes, now: datetime.datetime) -> GotthardStatus:
-    """The Gotthard's traffic, from a pull of the whole feed."""
+def parse(
+    document: bytes, now: datetime.datetime, radius_km: float = 0
+) -> GotthardStatus:
+    """The Gotthard's traffic, from a pull of the whole feed. With a radius,
+    only the A2's and A4's messages that close to the Gotthard, or that can't
+    be placed, count."""
     try:
         root = ET.fromstring(document)
     except ET.ParseError as err:
@@ -372,17 +379,24 @@ def parse(document: bytes, now: datetime.datetime) -> GotthardStatus:
         message = _message(element)
         if message.text.startswith(RESCINDED):
             continue
+        # The A2's and A4's within the radius only; the tunnel's, the
+        # Axenstrasse's and the pass's always.
+        near = _near(message, radius_km)
         if not is_queue(message) and (
             message.is_current(now) or message.next_start(now)
         ):
             for key in calendars_of(message):
-                status.calendars[key].append(message)
+                if near or key not in ROADS:
+                    status.calendars[key].append(message)
         if message.road in ROADS and _is_closure(message):
-            directions = (
-                (NORTH, SOUTH) if message.direction == BOTH else (message.direction,)
-            )
-            for direction in directions:
-                status.roads[message.road][direction].add(message, now)
+            if near:
+                directions = (
+                    (NORTH, SOUTH)
+                    if message.direction == BOTH
+                    else (message.direction,)
+                )
+                for direction in directions:
+                    status.roads[message.road][direction].add(message, now)
             if message.road == "A4" and AXENSTRASSE.search(message.location):
                 status.axenstrasse.add(message, now)
         if not NEAR_GOTTHARD.search(message.location):
@@ -437,6 +451,12 @@ def _message(element: ET.Element) -> Message:
                     f"{texts[language]} {part}" if language in texts else part
                 )
 
+    codes = tuple(
+        int(code.text)
+        for code in element.iter(f"{DX2}specificLocation")
+        if code.text and code.text.strip().isdigit()
+    )
+
     return Message(
         identifier=element.get("id", ""),
         type=element.get(XSI_TYPE, "").rpartition(":")[2],
@@ -445,6 +465,7 @@ def _message(element: ET.Element) -> Message:
         start=start,
         end=end,
         texts=texts,
+        codes=codes,
     )
 
 
@@ -463,6 +484,15 @@ def _at(moment: datetime.datetime, time: datetime.time) -> datetime.datetime:
     local = moment.astimezone(SWITZERLAND)
     at = local.replace(hour=time.hour, minute=time.minute, second=0, microsecond=0)
     return at if at > local else at + datetime.timedelta(days=1)
+
+
+def _near(message: Message, radius_km: float) -> bool:
+    """Within the radius of the Gotthard. A message that can't be placed is
+    near, so as to hide nothing local; with no radius, all are."""
+    if radius_km <= 0:
+        return True
+    away = distance(message.codes)
+    return away is None or away <= radius_km
 
 
 def calendars_of(message: Message) -> list[str]:

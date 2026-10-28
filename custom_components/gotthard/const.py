@@ -38,3 +38,7 @@ COUNTERS_INTERVAL = datetime.timedelta(minutes=2)
 # The calendars show closures; restrictions (lanes, ramps, roadworks) too
 # only when turned on in the options.
 CONF_RESTRICTIONS = "restrictions"
+
+# The A2's and A4's messages are only those this close to the Gotthard (0: all).
+CONF_RADIUS = "radius_km"
+DEFAULT_RADIUS = 45

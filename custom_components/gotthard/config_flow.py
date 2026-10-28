@@ -15,6 +15,9 @@ from homeassistant.core import callback
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
 from homeassistant.helpers.selector import (
     BooleanSelector,
+    NumberSelector,
+    NumberSelectorConfig,
+    NumberSelectorMode,
     TextSelector,
     TextSelectorConfig,
     TextSelectorType,
@@ -25,7 +28,9 @@ from custom_components.gotthard.const import (
     CONF_API_KEY,
     CONF_COUNTERS,
     CONF_COUNTERS_API_KEY,
+    CONF_RADIUS,
     CONF_RESTRICTIONS,
+    DEFAULT_RADIUS,
     DOMAIN,
     TITLE,
 )
@@ -135,6 +140,7 @@ class GotthardOptionsFlow(OptionsFlow):
                 # Turned off, the key is kept for turning them on again.
                 return self.async_create_entry(
                     data={
+                        CONF_RADIUS: user_input.get(CONF_RADIUS, DEFAULT_RADIUS),
                         CONF_RESTRICTIONS: user_input.get(CONF_RESTRICTIONS, False),
                         CONF_COUNTERS: enabled,
                         CONF_COUNTERS_API_KEY: api_key,
@@ -142,6 +148,17 @@ class GotthardOptionsFlow(OptionsFlow):
                 )
         schema = vol.Schema(
             {
+                vol.Required(
+                    CONF_RADIUS, default=options.get(CONF_RADIUS, DEFAULT_RADIUS)
+                ): NumberSelector(
+                    NumberSelectorConfig(
+                        min=0,
+                        max=300,
+                        step=5,
+                        unit_of_measurement="km",
+                        mode=NumberSelectorMode.BOX,
+                    )
+                ),
                 vol.Required(
                     CONF_RESTRICTIONS, default=options.get(CONF_RESTRICTIONS, False)
                 ): BooleanSelector(),

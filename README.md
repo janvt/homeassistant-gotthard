@@ -74,6 +74,18 @@ says "(no end announced)".
 Restrictions (a lane, a ramp, roadworks) are many, so they're only in the
 calendars when **Restrictions in the calendars** is turned on in the options.
 
+**Near the Gotthard only.** The A2's and A4's messages, in their calendars and
+their closure sensors, count only within **45 km of the Gotthard road tunnel**
+by default: Göschenen to Biasca, Altdorf, the Axenstrasse and Stans-Süd, not
+Lucerne, Basel, Lugano or Winterthur. Change the distance in the options; 0 is
+the whole of both roads. The tunnel, the Axenstrasse and the pass always count.
+
+The messages only give Alert-C location codes. `locations.json` places them,
+from the counting stations' table (`scripts/make_locations.py`), and a code
+between two placed ones is placed between them; together that places nearly
+all of them. A message that still can't be placed counts, so as not to hide a
+local closure.
+
 The feed only has messages current or to come, so the calendars don't keep
 past closures.
 

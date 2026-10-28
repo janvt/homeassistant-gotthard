@@ -138,8 +138,9 @@
         "step": {
             "init": {
                 "title": "Options",
-                "description": "Closures of the tunnel, the Axenstrasse, the Gotthard Pass and the A2 and A4 are in their calendars. Restrictions (lanes, ramps, roadworks) are many, and only in them when turned on here.\n\nThe traffic counters: vehicles, lorries and speeds counted every minute at FEDRO's stations on the A2 and A4 around Uri, with a queue forming before each Gotthard portal, traffic on the Axenstrasse and travel times. Off unless turned on here. They need their own free API key for \"Traffic Counters\", from {api_key_url}.",
+                "description": "Messages on the A2 and A4 count only within this distance of the Gotthard road tunnel: for their calendars and closure sensors. 0 is the whole of both roads. The tunnel, the Axenstrasse (A4) and the pass always count.\n\nClosures of the tunnel, the Axenstrasse, the Gotthard Pass and the A2 and A4 are in their calendars. Restrictions (lanes, ramps, roadworks) are many, and only in them when turned on here.\n\nThe traffic counters: vehicles, lorries and speeds counted every minute at FEDRO's stations on the A2 and A4 around Uri, with a queue forming before each Gotthard portal, traffic on the Axenstrasse and travel times. Off unless turned on here. They need their own free API key for \"Traffic Counters\", from {api_key_url}.",
                 "data": {
+                    "radius_km": "A2 and A4 within (km of the Gotthard)",
                     "restrictions": "Restrictions in the calendars",
                     "counters": "Traffic counters",
                     "counters_api_key": "Traffic counters API key"

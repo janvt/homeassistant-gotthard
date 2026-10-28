@@ -106,9 +106,11 @@ async def test_national_roads(hass, loaded):
     ) == datetime.datetime.fromisoformat("2026-11-02T22:00:00+01:00")
     a4 = hass.states.get("sensor.national_roads_a4_closures_northbound_to_schaffhausen")
     assert a4.state == "1"
-    assert len(a4.attributes["planned"]) == 2
+    # Within 45 km of the Gotthard, the default: not Winterthur.
+    assert len(a4.attributes["planned"]) == 1
     a2 = hass.states.get("sensor.national_roads_a2_closures_southbound_to_chiasso")
-    assert (a2.state, len(a2.attributes["planned"])) == ("0", 4)
+    # The tunnel's two; Lucerne (54 km) and Basel (127 km) are out.
+    assert (a2.state, len(a2.attributes["planned"])) == ("0", 2)
 
 
 # ── the traffic counters ────────────────────────────────────────────────────

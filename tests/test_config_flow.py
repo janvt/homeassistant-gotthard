@@ -9,7 +9,9 @@ from custom_components.gotthard.const import (
     CONF_API_KEY,
     CONF_COUNTERS,
     CONF_COUNTERS_API_KEY,
+    CONF_RADIUS,
     CONF_RESTRICTIONS,
+    DEFAULT_RADIUS,
     DOMAIN,
 )
 from custom_components.gotthard.datex import URL
@@ -96,6 +98,7 @@ async def test_turning_counters_on(hass, entry, feed, counters):
     )
     assert result["type"] is FlowResultType.CREATE_ENTRY
     assert entry.options == {
+        CONF_RADIUS: DEFAULT_RADIUS,
         CONF_RESTRICTIONS: False,
         CONF_COUNTERS: True,
         CONF_COUNTERS_API_KEY: "counters-key",
@@ -119,6 +122,7 @@ async def test_turning_counters_off_keeps_the_key(hass, entry):
         result["flow_id"], {CONF_COUNTERS: False, CONF_COUNTERS_API_KEY: "kept"}
     )
     assert entry.options == {
+        CONF_RADIUS: DEFAULT_RADIUS,
         CONF_RESTRICTIONS: False,
         CONF_COUNTERS: False,
         CONF_COUNTERS_API_KEY: "kept",
@@ -133,3 +137,13 @@ async def test_restrictions_off_by_default(hass, entry):
         result["flow_id"], {CONF_RESTRICTIONS: True, CONF_COUNTERS: False}
     )
     assert entry.options[CONF_RESTRICTIONS] is True
+
+
+async def test_radius_45_km_by_default(hass, entry):
+    result = await hass.config_entries.options.async_init(entry.entry_id)
+    schema = {str(key): key for key in result["data_schema"].schema}
+    assert schema[CONF_RADIUS].default() == 45
+    result = await hass.config_entries.options.async_configure(
+        result["flow_id"], {CONF_RADIUS: 0, CONF_COUNTERS: False}
+    )
+    assert entry.options[CONF_RADIUS] == 0

@@ -3,7 +3,8 @@
   Written by hand after the shape of FEDRO's feed: the figures are in the texts
   only, and each text holds German, French and Italian in turn.  The texts of
   "far-roadworks", "andermatt-roadworks", "pass-night-closure" and "nufenen"
-  are the live feed's of 2026-10-28; their times are made up.  Each record is a
+  are the live feed's of 2026-10-28; their times are made up. The location
+  codes, where there are any, are the live feed's for the same messages.  Each record is a
   case of the tests.
 -->
 <soap:Envelope xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/">
@@ -114,6 +115,7 @@
         <situation id="live">
           <!-- Labelled "-> Gotthard" as every A2 message, but in Ticino. -->
           <situationRecord id="far-roadworks" xsi:type="MaintenanceWorks">
+            <groupOfLocations><alertCLinear><alertCMethod4PrimaryPointLocation><alertCLocation><specificLocation>10469</specificLocation></alertCLocation></alertCMethod4PrimaryPointLocation><alertCMethod4SecondaryPointLocation><alertCLocation><specificLocation>10471</specificLocation></alertCLocation></alertCMethod4SecondaryPointLocation></alertCLinear></groupOfLocations>
             <validity><validityStatus>active</validityStatus></validity>
             <generalPublicComment><comment><values>
               <value lang="de">Freigegeben: A2 Chiasso -&gt; Gotthard zwischen Anschluss Lugano-Nord und Anschluss Rivera Sachlage: Verkehrsbehinderung Baustelle, Länge [km] 0.8 Verkehrsführung: Fahrbahnverengung auf einen Fahrstreifen verengt Zusatz 1: vorübergehende Begrenzung der Breite Fahrbahnbreite [m] 3.5 Dauer: nachts voraussichtlich 28.10.2026 21:30 bis 29.10.2026 04:00 ID117721 Libéré: A2 Chiasso -&gt; St-Gothard entre Jonction autoroutière Lugano-Nord et Jonction autoroutière Rivera Situation: trafic perturbé travaux, longueur [km] 0.8 Approvato: A2 Chiasso -&gt; S. Gottardo tra Svincolo autostradale Lugano Nord E Svincolo autostradale Rivera Situazione: problemi di traffico cantiere, lunghezza [km] 0.8</value>
@@ -160,6 +162,7 @@
         -->
         <situation id="roads">
           <situationRecord id="axen-now" xsi:type="RoadOrCarriagewayOrLaneManagement">
+            <groupOfLocations><alertCLinear><alertCMethod4PrimaryPointLocation><alertCLocation><specificLocation>27078</specificLocation></alertCLocation></alertCMethod4PrimaryPointLocation><alertCMethod4SecondaryPointLocation><alertCLocation><specificLocation>27077</specificLocation></alertCLocation></alertCMethod4SecondaryPointLocation></alertCLinear></groupOfLocations>
             <validity>
               <validityStatus>active</validityStatus>
               <validityTimeSpecification><overallStartTime>2026-09-09T07:08:00.000000Z</overallStartTime></validityTimeSpecification>
@@ -170,6 +173,7 @@
             </values></comment></generalPublicComment>
           </situationRecord>
           <situationRecord id="axen-nights" xsi:type="RoadOrCarriagewayOrLaneManagement">
+            <groupOfLocations><alertCLinear><alertCMethod4PrimaryPointLocation><alertCLocation><specificLocation>27078</specificLocation></alertCLocation></alertCMethod4PrimaryPointLocation><alertCMethod4SecondaryPointLocation><alertCLocation><specificLocation>27322</specificLocation></alertCLocation></alertCMethod4SecondaryPointLocation></alertCLinear></groupOfLocations>
             <validity>
               <validityStatus>active</validityStatus>
               <validityTimeSpecification>
@@ -204,6 +208,7 @@
             </values></comment></generalPublicComment>
           </situationRecord>
           <situationRecord id="a4-north" xsi:type="RoadOrCarriagewayOrLaneManagement">
+            <groupOfLocations><alertCLinear><alertCMethod4PrimaryPointLocation><alertCLocation><specificLocation>25933</specificLocation></alertCLocation></alertCMethod4PrimaryPointLocation><alertCMethod4SecondaryPointLocation><alertCLocation><specificLocation>10162</specificLocation></alertCLocation></alertCMethod4SecondaryPointLocation></alertCLinear></groupOfLocations>
             <validity>
               <validityStatus>active</validityStatus>
               <validityTimeSpecification>
@@ -217,6 +222,7 @@
             </values></comment></generalPublicComment>
           </situationRecord>
           <situationRecord id="a2-north" xsi:type="RoadOrCarriagewayOrLaneManagement">
+            <groupOfLocations><alertCLinear><alertCMethod4PrimaryPointLocation><alertCLocation><specificLocation>10447</specificLocation></alertCLocation></alertCMethod4PrimaryPointLocation><alertCMethod4SecondaryPointLocation><alertCLocation><specificLocation>10450</specificLocation></alertCLocation></alertCMethod4SecondaryPointLocation></alertCLinear></groupOfLocations>
             <validity>
               <validityStatus>active</validityStatus>
               <validityTimeSpecification>
@@ -230,6 +236,7 @@
             </values></comment></generalPublicComment>
           </situationRecord>
           <situationRecord id="a2-both-ways" xsi:type="RoadOrCarriagewayOrLaneManagement">
+            <groupOfLocations><alertCLinear><alertCMethod4PrimaryPointLocation><alertCLocation><specificLocation>11136</specificLocation></alertCLocation></alertCMethod4PrimaryPointLocation><alertCMethod4SecondaryPointLocation><alertCLocation><specificLocation>10441</specificLocation></alertCLocation></alertCMethod4SecondaryPointLocation></alertCLinear></groupOfLocations>
             <validity>
               <validityStatus>active</validityStatus>
               <validityTimeSpecification>
@@ -244,6 +251,7 @@
           </situationRecord>
           <!-- Neither place is in the road's list: counted both ways. -->
           <situationRecord id="a2-hagnau" xsi:type="RoadOrCarriagewayOrLaneManagement">
+            <groupOfLocations><alertCLinear><alertCMethod4PrimaryPointLocation><alertCLocation><specificLocation>27710</specificLocation></alertCLocation></alertCMethod4PrimaryPointLocation><alertCMethod4SecondaryPointLocation><alertCLocation><specificLocation>27709</specificLocation></alertCLocation></alertCMethod4SecondaryPointLocation></alertCLinear></groupOfLocations>
             <validity>
               <validityStatus>active</validityStatus>
               <validityTimeSpecification>

@@ -138,8 +138,9 @@
         "step": {
             "init": {
                 "title": "Optionen",
-                "description": "Sperrungen des Tunnels, der Axenstrasse, des Gotthardpasses und der A2 und A4 stehen in ihren Kalendern. Einschränkungen (Fahrstreifen, Ein- und Ausfahrten, Baustellen) sind viele und stehen nur darin, wenn hier eingeschaltet.\n\nDie Verkehrszähler: Fahrzeuge, Lastwagen und Geschwindigkeiten, jede Minute an den Zählstellen des ASTRA auf der A2 und A4 rund um Uri gezählt, dazu ein sich bildender Stau vor den Gotthard-Portalen, Verkehr auf der Axenstrasse und Fahrzeiten. Aus, bis sie hier eingeschaltet werden. Sie brauchen einen eigenen kostenlosen API-Schlüssel für «Traffic Counters» von {api_key_url}.",
+                "description": "Meldungen auf der A2 und A4 zählen nur in diesem Umkreis um den Gotthard-Strassentunnel: für ihre Kalender und Sperrungs-Sensoren. 0 heisst die ganze A2 und A4. Der Tunnel, die Axenstrasse (A4) und der Pass zählen immer.\n\nSperrungen des Tunnels, der Axenstrasse, des Gotthardpasses und der A2 und A4 stehen in ihren Kalendern. Einschränkungen (Fahrstreifen, Ein- und Ausfahrten, Baustellen) sind viele und stehen nur darin, wenn hier eingeschaltet.\n\nDie Verkehrszähler: Fahrzeuge, Lastwagen und Geschwindigkeiten, jede Minute an den Zählstellen des ASTRA auf der A2 und A4 rund um Uri gezählt, dazu ein sich bildender Stau vor den Gotthard-Portalen, Verkehr auf der Axenstrasse und Fahrzeiten. Aus, bis sie hier eingeschaltet werden. Sie brauchen einen eigenen kostenlosen API-Schlüssel für «Traffic Counters» von {api_key_url}.",
                 "data": {
+                    "radius_km": "A2 und A4 im Umkreis von (km um den Gotthard)",
                     "restrictions": "Einschränkungen in den Kalendern",
                     "counters": "Verkehrszähler",
                     "counters_api_key": "API-Schlüssel der Verkehrszähler"
