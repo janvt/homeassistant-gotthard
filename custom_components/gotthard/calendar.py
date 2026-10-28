@@ -12,6 +12,7 @@ from homeassistant.util import dt as dt_util
 from custom_components.gotthard import GotthardConfigEntry, GotthardCoordinator
 from custom_components.gotthard.const import ATTRIBUTION, CONF_RESTRICTIONS
 from custom_components.gotthard.datex import CALENDARS
+from custom_components.gotthard.entity import StableObjectId
 from custom_components.gotthard.road_calendar import Event, events
 
 # For the event the calendar's state shows: what's on now, or next.
@@ -36,7 +37,9 @@ async def async_setup_entry(
     )
 
 
-class RoadCalendar(CoordinatorEntity[GotthardCoordinator], CalendarEntity):
+class RoadCalendar(
+    StableObjectId, CoordinatorEntity[GotthardCoordinator], CalendarEntity
+):
     _attr_attribution = ATTRIBUTION
     _attr_has_entity_name = True
 
@@ -48,6 +51,8 @@ class RoadCalendar(CoordinatorEntity[GotthardCoordinator], CalendarEntity):
             f"{coordinator.config_entry.entry_id}-calendar_{key.lower()}"
         )
         self._attr_device_info = device_info
+        if key == "axenstrasse":
+            self._object_id = "axenstrasse"
 
     def _events(self, start: datetime.datetime, end: datetime.datetime) -> list[Event]:
         if self.coordinator.data is None:

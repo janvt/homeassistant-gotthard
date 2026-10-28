@@ -31,7 +31,7 @@
                 "name": "Tunnel"
             },
             "axenstrasse": {
-                "name": "Axenstrasse"
+                "name": "Axenstrasse (A4)"
             },
             "queue_forming_north": {
                 "name": "Queue forming before the north portal"
@@ -40,7 +40,7 @@
                 "name": "Queue forming before the south portal"
             },
             "axenstrasse_traffic": {
-                "name": "Axenstrasse traffic"
+                "name": "Axenstrasse (A4) traffic"
             }
         },
         "camera": {
@@ -71,7 +71,7 @@
                 "name": "Traffic messages"
             },
             "next_axenstrasse_closure": {
-                "name": "Next Axenstrasse closure"
+                "name": "Next Axenstrasse (A4) closure"
             },
             "closures_a2_north": {
                 "name": "A2 closures northbound (to Basel)"
@@ -121,7 +121,7 @@
                 "name": "Tunnel closures"
             },
             "calendar_axenstrasse": {
-                "name": "Axenstrasse"
+                "name": "Axenstrasse (A4)"
             },
             "calendar_gotthard_pass": {
                 "name": "Gotthard Pass"

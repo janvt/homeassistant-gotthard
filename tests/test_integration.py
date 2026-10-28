@@ -170,10 +170,12 @@ async def test_traffic_derived(hass, with_traffic):
 
 async def test_calendars(hass, loaded):
     axen = hass.states.get("calendar.national_roads_axenstrasse")
-    # The closure with no end, on now.
-    assert axen.state == STATE_ON
-    assert axen.attributes["message"].startswith(
-        "Axenstrasse closed: Flüelen – Sisikon"
+    # The closure with no end was on its first day only: next are the nights.
+    assert axen.state == STATE_OFF
+    assert axen.attributes["friendly_name"] == "National roads Axenstrasse (A4)"
+    assert (
+        axen.attributes["message"]
+        == "Axenstrasse (A4) closed: Flüelen-Tunnel – Sisikon"
     )
     result = await hass.services.async_call(
         "calendar",
@@ -185,7 +187,19 @@ async def test_calendars(hass, loaded):
     summaries = [
         e["summary"] for e in result["calendar.national_roads_axenstrasse"]["events"]
     ]
-    assert summaries.count("Axenstrasse closed: Flüelen-Tunnel – Sisikon") == 2
+    assert summaries.count("Axenstrasse (A4) closed: Flüelen-Tunnel – Sisikon") == 2
     assert hass.states.get("calendar.gotthard_tunnel_closures") is not None
     for key in ("gotthard_pass", "a2", "a4"):
         assert hass.states.get(f"calendar.national_roads_{key}") is not None
+
+
+async def test_axenstrasse_named_with_its_road_ids_unchanged(hass, loaded):
+    """Named "Axenstrasse (A4)"; ids as before, which dashboards use."""
+    for entity, name in (
+        ("binary_sensor.national_roads_axenstrasse", "National roads Axenstrasse (A4)"),
+        (
+            "sensor.national_roads_next_axenstrasse_closure",
+            "National roads Next Axenstrasse (A4) closure",
+        ),
+    ):
+        assert hass.states.get(entity).attributes["friendly_name"] == name

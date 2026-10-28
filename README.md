@@ -62,11 +62,14 @@ its period.
 
 The closures are calendars too, for the Calendar panel, a calendar card or an
 automation: **Tunnel closures** (the Gotthard tunnel) and, on *National
-roads*, **Axenstrasse**, **Gotthard Pass**, **A2** and **A4**. Each closure is
-an event, "Axenstrasse closed: Flüelen-Tunnel – Sisikon", with its cause, its
-length, any detour and the whole message in its description. A closure only at
-night or by day is an event each night or day of its period. One with no end
-announced runs to the end of each day and says "(no end announced)".
+roads*, **Axenstrasse (A4)**, **Gotthard Pass**, **A2** and **A4**. Each closure
+is on one of them only: the tunnel's aren't on the A2's, nor the Axenstrasse's
+on the A4's. Each is an event, "Axenstrasse (A4) closed: Flüelen-Tunnel –
+Sisikon", with its cause, its length, any detour and the whole message in its
+description. A closure only at night or by day is an event each night or day
+of its period. One with no end announced, as for an accident, and often never
+updated, is on the day it started only (a night closure, its first night), and
+says "(no end announced)".
 
 Restrictions (a lane, a ramp, roadworks) are many, so they're only in the
 calendars when **Restrictions in the calendars** is turned on in the options.

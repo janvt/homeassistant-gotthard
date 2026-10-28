@@ -474,8 +474,10 @@ def calendars_of(message: Message) -> list[str]:
             ("tunnel", road == "A2" and TUNNEL.search(location)),
             ("axenstrasse", road == "A4" and AXENSTRASSE.search(location)),
             ("gotthard_pass", road == "H2" and GOTTHARD_PASS.search(location)),
-            ("A2", road == "A2"),
-            ("A4", road == "A4"),
+            # Each closure on one calendar: the tunnel's and the Axenstrasse's
+            # aren't on their road's too.
+            ("A2", road == "A2" and not TUNNEL.search(location)),
+            ("A4", road == "A4" and not AXENSTRASSE.search(location)),
         )
         if on
     ]

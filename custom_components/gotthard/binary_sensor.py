@@ -19,6 +19,7 @@ from custom_components.gotthard import (
 from custom_components.gotthard.const import ATTRIBUTION, NORTH, SOUTH
 from custom_components.gotthard.counters import Traffic
 from custom_components.gotthard.datex import Closures, GotthardStatus
+from custom_components.gotthard.entity import StableObjectId
 
 
 async def async_setup_entry(
@@ -70,7 +71,9 @@ async def async_setup_entry(
         )
 
 
-class TrafficBinary(CoordinatorEntity[CountersCoordinator], BinarySensorEntity):
+class TrafficBinary(
+    StableObjectId, CoordinatorEntity[CountersCoordinator], BinarySensorEntity
+):
     """From the counted traffic: a queue forming, traffic on a road."""
 
     _attr_attribution = ATTRIBUTION
@@ -87,6 +90,8 @@ class TrafficBinary(CoordinatorEntity[CountersCoordinator], BinarySensorEntity):
         super().__init__(coordinator)
         self._value = value
         self._attr_translation_key = key
+        if key.startswith("axenstrasse"):
+            self._object_id = key
         self._attr_unique_id = f"{coordinator.config_entry.entry_id}-{key}"
         self._attr_device_info = device_info
         self._attr_device_class = device_class
@@ -98,7 +103,9 @@ class TrafficBinary(CoordinatorEntity[CountersCoordinator], BinarySensorEntity):
         return self._value(self.coordinator.data)
 
 
-class GotthardOpen(CoordinatorEntity[GotthardCoordinator], BinarySensorEntity):
+class GotthardOpen(
+    StableObjectId, CoordinatorEntity[GotthardCoordinator], BinarySensorEntity
+):
     """On while the road is open: closed for a night, works, an accident."""
 
     _attr_attribution = ATTRIBUTION
@@ -116,6 +123,8 @@ class GotthardOpen(CoordinatorEntity[GotthardCoordinator], BinarySensorEntity):
         super().__init__(coordinator)
         self._closures = closures
         self._attr_translation_key = key
+        if key.startswith("axenstrasse"):
+            self._object_id = key
         # The tunnel's unique id is the one it always had.
         self._attr_unique_id = f"{coordinator.config_entry.entry_id}-{key}"
         self._attr_device_info = device_info

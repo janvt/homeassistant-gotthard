@@ -26,14 +26,14 @@ from custom_components.gotthard.datex import (
     is_closure,
 )
 
-# A closure or restriction with no end announced: shown until the end of each
-# day, marked so.
+# A closure or restriction with no end announced: shown on the day it started
+# only, marked so.
 NO_END = "no end announced"
 # Nightly closures are expanded this far at most, whatever is asked.
 HORIZON = datetime.timedelta(days=120)
 LABELS = {
     "tunnel": "Gotthard tunnel",
-    "axenstrasse": "Axenstrasse",
+    "axenstrasse": "Axenstrasse (A4)",
     "gotthard_pass": "Gotthard Pass",
     "A2": "A2",
     "A4": "A4",
@@ -147,6 +147,11 @@ def _situation_cause(message: Message) -> str:
     return rest.rstrip(", ")
 
 
+def _midnight_after(moment: datetime.datetime) -> datetime.datetime:
+    day = moment.astimezone(SWITZERLAND).date() + datetime.timedelta(days=1)
+    return datetime.datetime.combine(day, datetime.time(), SWITZERLAND)
+
+
 def occurrences(
     message: Message,
     start: datetime.datetime,
@@ -155,19 +160,24 @@ def occurrences(
 ) -> list[tuple[datetime.datetime, datetime.datetime]]:
     """When the message applies between `start` and `end`: once, or for a
     closure only at night or by day, once each day of its period."""
-    # Without times: from today, and until the end of each day.
-    today = now.astimezone(SWITZERLAND).replace(
+    first, last = period(message)
+    # Without a start: from today.
+    first = first or now.astimezone(SWITZERLAND).replace(
         hour=0, minute=0, second=0, microsecond=0
     )
-    first, last = period(message)
-    first = first or today
-    if (daily := message.daily) is None:
-        until = last or max(today + datetime.timedelta(days=1), now)
-        return [(first, until)] if first < end and until > start else []
+    daily = message.daily
+    if last is None:
+        # No end announced, as for an accident, and often never updated: the
+        # day it started only (a night closure, its first night).
+        last = _midnight_after(first) + (
+            datetime.timedelta(days=1) if daily else datetime.timedelta()
+        )
+    if daily is None:
+        return [(first, last)] if first < end and last > start else []
     out = []
     day = max(first, start - datetime.timedelta(days=1)).astimezone(SWITZERLAND)
     day = day.replace(hour=0, minute=0, second=0, microsecond=0)
-    stop = min(end, now + HORIZON, last) if last else min(end, now + HORIZON)
+    stop = min(end, now + HORIZON, last)
     while day < stop:
         window = day.replace(hour=daily[0].hour, minute=daily[0].minute)
         window_end = day.replace(hour=daily[1].hour, minute=daily[1].minute)
@@ -176,8 +186,7 @@ def occurrences(
             window_end = (day + datetime.timedelta(days=1)).replace(
                 hour=daily[1].hour, minute=daily[1].minute
             )
-        if last:
-            window_end = min(window_end, last)
+        window_end = min(window_end, last)
         if (
             window >= first
             and window < window_end

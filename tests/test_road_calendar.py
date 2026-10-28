@@ -28,16 +28,37 @@ def test_a_closure_at_night_is_an_event_each_night():
         (local(2026, 11, 2, 22, 0), local(2026, 11, 3, 5, 0)),
         (local(2026, 11, 3, 22, 0), local(2026, 11, 4, 5, 0)),
     ]
-    assert nights[0].summary == "Axenstrasse closed: Flüelen-Tunnel – Sisikon"
+    assert nights[0].summary == "Axenstrasse (A4) closed: Flüelen-Tunnel – Sisikon"
     assert nights[0].description.startswith(
         "Cause: Baustelle\nLength: 7.3 km\nAdvice: eine lokale"
     )
 
 
-def test_a_closure_without_an_end_is_marked():
-    now = [e for e in calendar("axenstrasse") if e.uid.startswith("axen-now")]
-    assert now[0].summary.endswith("(no end announced)")
-    assert now[0].end == local(2026, 10, 29, 0, 0)
+def test_a_closure_without_an_end_is_its_first_day_only():
+    """Accidents come without an end, and are often never updated: on the day
+    they started only, not every day since (the Axenstrasse's of 9 September)."""
+    assert not [e for e in calendar("axenstrasse") if e.uid.startswith("axen-now")]
+    since = calendar(
+        "axenstrasse", now=local(2026, 9, 9, 12, 0), end=local(2026, 9, 12)
+    )
+    stale = [e for e in since if e.uid.startswith("axen-now")]
+    assert [(e.start, e.end) for e in stale] == [
+        (local(2026, 9, 9, 9, 8), local(2026, 9, 10, 0, 0))
+    ]
+    assert stale[0].summary.endswith("(no end announced)")
+
+
+def test_each_closure_on_one_calendar():
+    """The Axenstrasse's aren't on the A4's too, nor the tunnel's on the A2's:
+    a card with all the calendars showed them twice."""
+    status = parse(FIXTURE, NOW)
+    ids = {
+        key: {m.identifier for m in messages}
+        for key, messages in status.calendars.items()
+    }
+    assert not ids["axenstrasse"] & ids["A4"]
+    assert not ids["tunnel"] & ids["A2"]
+    assert "a4-north" in ids["A4"] and "closure-later" in ids["tunnel"]
 
 
 def test_restrictions_only_when_turned_on():
@@ -111,5 +132,5 @@ def test_a_night_across_the_change_to_winter_time():
 
 def test_stretch():
     status = parse(FIXTURE, NOW)
-    by_id = {m.identifier: m for m in status.calendars["A4"]}
+    by_id = {m.identifier: m for m in status.calendars["axenstrasse"]}
     assert stretch(by_id["axen-nights"]) == "Flüelen-Tunnel – Sisikon"

@@ -31,6 +31,7 @@ from custom_components.gotthard.datex import (
     GotthardStatus,
     Message,
 )
+from custom_components.gotthard.entity import StableObjectId
 
 
 @dataclass(frozen=True, kw_only=True)
@@ -39,6 +40,8 @@ class GotthardSensorDescription(SensorEntityDescription):
     attributes: Callable[[GotthardStatus, str], dict[str, Any]] | None = None
     # The Gotthard's, or the national roads'.
     roads: bool = False
+    # The id's key, when the name isn't (see StableObjectId).
+    object_id: str | None = None
 
 
 def _length(portal: str) -> Callable[[GotthardStatus], float | None]:
@@ -156,6 +159,7 @@ SENSORS = [
     ),
     GotthardSensorDescription(
         key="next_axenstrasse_closure",
+        object_id="next_axenstrasse_closure",
         translation_key="next_axenstrasse_closure",
         device_class=SensorDeviceClass.TIMESTAMP,
         value=_next(_axenstrasse),
@@ -190,7 +194,9 @@ async def async_setup_entry(
         await _async_setup_traffic(counters, async_add_entities)
 
 
-class GotthardSensor(CoordinatorEntity[GotthardCoordinator], SensorEntity):
+class GotthardSensor(
+    StableObjectId, CoordinatorEntity[GotthardCoordinator], SensorEntity
+):
     _attr_attribution = ATTRIBUTION
     _attr_has_entity_name = True
     # Long lists of texts, which change with every message: not for the
@@ -203,6 +209,7 @@ class GotthardSensor(CoordinatorEntity[GotthardCoordinator], SensorEntity):
     ) -> None:
         super().__init__(coordinator)
         self.entity_description = description
+        self._object_id = description.object_id
         self._attr_unique_id = f"{coordinator.config_entry.entry_id}-{description.key}"
         self._attr_device_info = (
             coordinator.roads_device_info
