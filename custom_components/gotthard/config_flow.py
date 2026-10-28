@@ -27,7 +27,7 @@ from custom_components.gotthard.const import (
     CONF_COUNTERS_API_KEY,
     CONF_RESTRICTIONS,
     DOMAIN,
-    NAME,
+    TITLE,
 )
 from custom_components.gotthard.counters import (
     Counters,
@@ -65,7 +65,7 @@ class GotthardFlowHandler(ConfigFlow, domain=DOMAIN):
         if user_input is not None:
             errors = await self._async_check(user_input[CONF_API_KEY])
             if not errors:
-                return self.async_create_entry(title=NAME, data=user_input)
+                return self.async_create_entry(title=TITLE, data=user_input)
         return self.async_show_form(
             step_id="user",
             data_schema=SCHEMA,

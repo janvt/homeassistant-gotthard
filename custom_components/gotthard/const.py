@@ -3,6 +3,9 @@
 import datetime
 
 DOMAIN = "gotthard"
+# The integration's name. The device keeps the short NAME: new entity ids
+# are made from it, and dashboards use them.
+TITLE = "Gotthard Tunnel Traffic"
 NAME = "Gotthard"
 USER_AGENT = "homeassistant-gotthard (github.com/janvt/homeassistant-gotthard)"
 ATTRIBUTION = "Data: FEDRO (ASTRA) via opentransportdata.swiss"

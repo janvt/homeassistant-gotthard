@@ -27,6 +27,7 @@ async def test_user(hass, feed):
     )
     assert result["type"] is FlowResultType.CREATE_ENTRY
     assert result["data"] == {CONF_API_KEY: API_KEY}
+    assert result["title"] == "Gotthard Tunnel Traffic"
     assert feed.mock_calls[0][3]["Authorization"] == f"Bearer {API_KEY}"
 
 

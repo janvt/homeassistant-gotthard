@@ -10,14 +10,14 @@
         },
         "step": {
             "user": {
-                "title": "Gotthard",
+                "title": "Gotthard Tunnel Traffic",
                 "description": "Die Verkehrsmeldungen stammen vom Bundesamt für Strassen (ASTRA). Sie brauchen einen kostenlosen API-Schlüssel für «Traffic Situations» von {api_key_url}.",
                 "data": {
                     "api_key": "API-Schlüssel"
                 }
             },
             "reauth_confirm": {
-                "title": "Gotthard: neuer API-Schlüssel",
+                "title": "Gotthard Tunnel Traffic: neuer API-Schlüssel",
                 "description": "Der API-Schlüssel wurde abgelehnt. Schlüssel laufen nach sechs Monaten ab: Holen Sie einen neuen bei {api_key_url}.",
                 "data": {
                     "api_key": "API-Schlüssel"

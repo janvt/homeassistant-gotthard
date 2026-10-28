@@ -1,4 +1,4 @@
-# Gotthard
+# Gotthard Tunnel Traffic
 
 A Home Assistant integration for the traffic at the Gotthard road tunnel: the
 queues before its portals, whether it is open, its closures to come, and the
@@ -10,7 +10,7 @@ from [opentransportdata.swiss](https://opentransportdata.swiss).
 ## Installation
 
 With [HACS](https://hacs.xyz): add this repository as a custom repository of
-type *Integration*, install *Gotthard*, and restart Home Assistant.
+type *Integration*, install *Gotthard Tunnel Traffic*, and restart Home Assistant.
 
 Or copy `custom_components/gotthard` into your configuration's
 `custom_components` folder and restart.
@@ -22,7 +22,7 @@ The traffic messages need a free API key:
 1. Register at the [API manager](https://api-manager.opentransportdata.swiss).
 2. Create an application and subscribe it to **Traffic Situations**.
 3. In Home Assistant, go to *Settings → Devices & services → Add integration*,
-   choose *Gotthard* and enter the key.
+   choose *Gotthard Tunnel Traffic* and enter the key.
 
 A key is limited to 260 000 requests per six months and expires after six
 months unless FEDRO extends it (`verkehrsdaten-plattform@astra.admin.ch`). The
@@ -77,7 +77,7 @@ past closures.
 ## Traffic counters (opt in)
 
 FEDRO counts the traffic at its stations every minute. Turn them on under
-*Settings → Devices & services → Gotthard → Configure* (**Traffic counters**),
+*Settings → Devices & services → Gotthard Tunnel Traffic → Configure* (**Traffic counters**),
 with a second free key, for **Traffic Counters**, from the same
 [API manager](https://api-manager.opentransportdata.swiss). They're polled
 every 2 minutes, and each reading is averaged over the last 10.
