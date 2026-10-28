@@ -32,6 +32,15 @@
             },
             "axenstrasse": {
                 "name": "Axenstrasse"
+            },
+            "queue_forming_north": {
+                "name": "Queue forming before the north portal"
+            },
+            "queue_forming_south": {
+                "name": "Queue forming before the south portal"
+            },
+            "axenstrasse_traffic": {
+                "name": "Axenstrasse traffic"
             }
         },
         "camera": {
@@ -75,7 +84,54 @@
             },
             "closures_a4_south": {
                 "name": "A4 closures southbound (to Altdorf)"
+            },
+            "flow_south": {
+                "name": "Southbound traffic"
+            },
+            "flow_north": {
+                "name": "Northbound traffic"
+            },
+            "lorries_south": {
+                "name": "Southbound lorries"
+            },
+            "lorries_north": {
+                "name": "Northbound lorries"
+            },
+            "speed_south": {
+                "name": "Southbound speed"
+            },
+            "speed_north": {
+                "name": "Northbound speed"
+            },
+            "travel_altdorf_goschenen": {
+                "name": "Travel time Altdorf → Göschenen"
+            },
+            "travel_goschenen_altdorf": {
+                "name": "Travel time Göschenen → Altdorf"
+            },
+            "travel_altdorf_stans": {
+                "name": "Travel time Altdorf → Stans"
+            },
+            "travel_stans_altdorf": {
+                "name": "Travel time Stans → Altdorf"
             }
+        }
+    },
+    "options": {
+        "step": {
+            "init": {
+                "title": "Traffic counters",
+                "description": "Vehicles, lorries and speeds counted every minute at FEDRO's stations on the A2 and A4 around Uri, with a queue forming before each Gotthard portal, traffic on the Axenstrasse and travel times. Off unless turned on here. They need their own free API key for \"Traffic Counters\", from {api_key_url}.",
+                "data": {
+                    "counters": "Traffic counters",
+                    "counters_api_key": "Traffic counters API key"
+                }
+            }
+        },
+        "error": {
+            "counters_key_required": "Turning the traffic counters on needs their API key",
+            "invalid_auth": "The API key was refused",
+            "cannot_connect": "The traffic counters could not be loaded; please retry later"
         }
     }
 }

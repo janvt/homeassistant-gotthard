@@ -52,3 +52,29 @@ async def test_feed(session):
     # Whatever the traffic, there are always roadworks or closures to tell.
     print(*(message.text for message in status.messages), sep="\n")
     print(status.queues, status.tunnel_closed, status.planned_closures, sep="\n")
+
+
+COUNTERS_API_KEY = os.environ.get("COUNTERS_API_KEY")
+
+
+@pytest.mark.skipif(not COUNTERS_API_KEY, reason="COUNTERS_API_KEY is not set")
+async def test_counters(session):
+    """Every station still in the feed, with recent minutes."""
+    from custom_components.gotthard.counters import (
+        STATIONS,
+        Averages,
+        Counters,
+        traffic,
+    )
+
+    readings = await Counters(session, COUNTERS_API_KEY).async_get()
+    missing = {(s.key, d) for s in STATIONS for d in s.lanes} - set(readings)
+    assert not missing, missing
+    newest = max(r.time for r in readings.values())
+    assert datetime.datetime.now(datetime.UTC) - newest < datetime.timedelta(minutes=15)
+    averages = Averages()
+    averages.add(readings)
+    t = traffic(averages)
+    for (key, direction), r in sorted(t.stations.items()):
+        print(key, direction, f"{r.flow:.0f}/h", f"{r.lorries:.0f} lorries", r.speed)
+    print(t.forming, t.axen_flowing, t.travel)

@@ -32,6 +32,15 @@
             },
             "axenstrasse": {
                 "name": "Axenstrasse"
+            },
+            "queue_forming_north": {
+                "name": "Stau bildet sich vor dem Nordportal"
+            },
+            "queue_forming_south": {
+                "name": "Stau bildet sich vor dem Südportal"
+            },
+            "axenstrasse_traffic": {
+                "name": "Verkehr auf der Axenstrasse"
             }
         },
         "camera": {
@@ -75,7 +84,54 @@
             },
             "closures_a4_south": {
                 "name": "Sperrungen A4 Richtung Altdorf"
+            },
+            "flow_south": {
+                "name": "Verkehr Richtung Süden"
+            },
+            "flow_north": {
+                "name": "Verkehr Richtung Norden"
+            },
+            "lorries_south": {
+                "name": "Lastwagen Richtung Süden"
+            },
+            "lorries_north": {
+                "name": "Lastwagen Richtung Norden"
+            },
+            "speed_south": {
+                "name": "Geschwindigkeit Richtung Süden"
+            },
+            "speed_north": {
+                "name": "Geschwindigkeit Richtung Norden"
+            },
+            "travel_altdorf_goschenen": {
+                "name": "Fahrzeit Altdorf → Göschenen"
+            },
+            "travel_goschenen_altdorf": {
+                "name": "Fahrzeit Göschenen → Altdorf"
+            },
+            "travel_altdorf_stans": {
+                "name": "Fahrzeit Altdorf → Stans"
+            },
+            "travel_stans_altdorf": {
+                "name": "Fahrzeit Stans → Altdorf"
             }
+        }
+    },
+    "options": {
+        "step": {
+            "init": {
+                "title": "Verkehrszähler",
+                "description": "Fahrzeuge, Lastwagen und Geschwindigkeiten, jede Minute an den Zählstellen des ASTRA auf der A2 und A4 rund um Uri gezählt, dazu ein sich bildender Stau vor den Gotthard-Portalen, Verkehr auf der Axenstrasse und Fahrzeiten. Aus, bis sie hier eingeschaltet werden. Sie brauchen einen eigenen kostenlosen API-Schlüssel für «Traffic Counters» von {api_key_url}.",
+                "data": {
+                    "counters": "Verkehrszähler",
+                    "counters_api_key": "API-Schlüssel der Verkehrszähler"
+                }
+            }
+        },
+        "error": {
+            "counters_key_required": "Zum Einschalten der Verkehrszähler braucht es ihren API-Schlüssel",
+            "invalid_auth": "Der API-Schlüssel wurde abgelehnt",
+            "cannot_connect": "Die Verkehrszähler konnten nicht geladen werden; bitte später erneut versuchen"
         }
     }
 }

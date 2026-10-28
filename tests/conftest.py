@@ -36,3 +36,12 @@ def entry(hass):
     )
     entry.add_to_hass(hass)
     return entry
+
+
+@pytest.fixture
+def counters(aioclient_mock):
+    """The counters, answering with a real minute."""
+    from custom_components.gotthard.counters import URL as COUNTERS_URL
+
+    aioclient_mock.post(COUNTERS_URL, content=(FIXTURES / "measured.xml").read_bytes())
+    return aioclient_mock

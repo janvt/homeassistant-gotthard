@@ -5,7 +5,12 @@ from http import HTTPStatus
 from homeassistant import config_entries
 from homeassistant.data_entry_flow import FlowResultType
 
-from custom_components.gotthard.const import CONF_API_KEY, DOMAIN
+from custom_components.gotthard.const import (
+    CONF_API_KEY,
+    CONF_COUNTERS,
+    CONF_COUNTERS_API_KEY,
+    DOMAIN,
+)
 from custom_components.gotthard.datex import URL
 
 from .conftest import API_KEY
@@ -64,3 +69,47 @@ async def test_reauth(hass, entry, feed):
     assert result["type"] is FlowResultType.ABORT
     assert result["reason"] == "reauth_successful"
     assert entry.data == {CONF_API_KEY: "new-key"}
+
+
+# ── the traffic counters, opt in in the options ─────────────────────────────
+async def test_counters_off_by_default(hass, entry):
+    result = await hass.config_entries.options.async_init(entry.entry_id)
+    schema = {str(key): key for key in result["data_schema"].schema}
+    assert schema[CONF_COUNTERS].default() is False
+
+
+async def test_turning_counters_on_needs_their_key(hass, entry):
+    result = await hass.config_entries.options.async_init(entry.entry_id)
+    result = await hass.config_entries.options.async_configure(
+        result["flow_id"], {CONF_COUNTERS: True}
+    )
+    assert result["errors"] == {CONF_COUNTERS_API_KEY: "counters_key_required"}
+
+
+async def test_turning_counters_on(hass, entry, feed, counters):
+    result = await hass.config_entries.options.async_init(entry.entry_id)
+    result = await hass.config_entries.options.async_configure(
+        result["flow_id"],
+        {CONF_COUNTERS: True, CONF_COUNTERS_API_KEY: " counters-key "},
+    )
+    assert result["type"] is FlowResultType.CREATE_ENTRY
+    assert entry.options == {CONF_COUNTERS: True, CONF_COUNTERS_API_KEY: "counters-key"}
+
+
+async def test_counters_key_refused(hass, entry, aioclient_mock):
+    from custom_components.gotthard.counters import URL as COUNTERS_URL
+
+    aioclient_mock.post(COUNTERS_URL, status=HTTPStatus.FORBIDDEN)
+    result = await hass.config_entries.options.async_init(entry.entry_id)
+    result = await hass.config_entries.options.async_configure(
+        result["flow_id"], {CONF_COUNTERS: True, CONF_COUNTERS_API_KEY: "wrong"}
+    )
+    assert result["errors"] == {"base": "invalid_auth"}
+
+
+async def test_turning_counters_off_keeps_the_key(hass, entry):
+    result = await hass.config_entries.options.async_init(entry.entry_id)
+    result = await hass.config_entries.options.async_configure(
+        result["flow_id"], {CONF_COUNTERS: False, CONF_COUNTERS_API_KEY: "kept"}
+    )
+    assert entry.options == {CONF_COUNTERS: False, CONF_COUNTERS_API_KEY: "kept"}

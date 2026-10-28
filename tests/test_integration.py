@@ -8,7 +8,14 @@ from homeassistant.components.camera import async_get_image
 from homeassistant.config_entries import SOURCE_REAUTH, ConfigEntryState
 from homeassistant.const import STATE_OFF, STATE_ON, STATE_UNAVAILABLE
 
-from custom_components.gotthard.const import NORTH, SOUTH, UPDATE_INTERVAL, WEBCAMS
+from custom_components.gotthard.const import (
+    CONF_COUNTERS,
+    CONF_COUNTERS_API_KEY,
+    NORTH,
+    SOUTH,
+    UPDATE_INTERVAL,
+    WEBCAMS,
+)
 from custom_components.gotthard.datex import URL
 
 NOW = "2026-10-28T12:00:00+01:00"
@@ -102,3 +109,60 @@ async def test_national_roads(hass, loaded):
     assert len(a4.attributes["planned"]) == 2
     a2 = hass.states.get("sensor.national_roads_a2_closures_southbound_to_chiasso")
     assert (a2.state, len(a2.attributes["planned"])) == ("0", 4)
+
+
+# ── the traffic counters ────────────────────────────────────────────────────
+GOSCHENEN = "sensor.a2_goschenen_southbound"
+
+
+async def test_no_traffic_unless_turned_on(hass, loaded):
+    assert hass.states.get(f"{GOSCHENEN}_traffic") is None
+    assert hass.states.get("binary_sensor.national_roads_axenstrasse_traffic") is None
+
+
+@pytest.fixture
+async def with_traffic(hass, entry, feed, counters, freezer):
+    freezer.move_to(NOW)
+    hass.config_entries.async_update_entry(
+        entry, options={CONF_COUNTERS: True, CONF_COUNTERS_API_KEY: "counters-key"}
+    )
+    await hass.config_entries.async_setup(entry.entry_id)
+    await hass.async_block_till_done()
+    return entry
+
+
+async def test_station_entities(hass, with_traffic):
+    assert hass.states.get(f"{GOSCHENEN}_traffic").state == "600.0"
+    assert hass.states.get(f"{GOSCHENEN}_lorries").state == "60.0"
+    speed = hass.states.get(f"{GOSCHENEN}_speed")
+    assert float(speed.state) == pytest.approx(69.74)
+    # On the map.
+    assert (speed.attributes["latitude"], speed.attributes["longitude"]) == (
+        46.67,
+        8.59,
+    )
+    assert (
+        hass.states.get("sensor.a4_sisikon_axenstrasse_northbound_traffic").state
+        == "780.0"
+    )
+
+
+async def test_traffic_derived(hass, with_traffic):
+    assert (
+        hass.states.get(
+            "binary_sensor.gotthard_queue_forming_before_the_north_portal"
+        ).state
+        == STATE_OFF
+    )
+    assert (
+        hass.states.get(
+            "binary_sensor.gotthard_queue_forming_before_the_south_portal"
+        ).state
+        == STATE_OFF
+    )
+    assert (
+        hass.states.get("binary_sensor.national_roads_axenstrasse_traffic").state
+        == STATE_ON
+    )
+    travel = hass.states.get("sensor.national_roads_travel_time_altdorf_goschenen")
+    assert 10 < float(travel.state) < 25

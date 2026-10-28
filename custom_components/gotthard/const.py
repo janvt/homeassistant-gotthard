@@ -24,3 +24,10 @@ WEBCAMS = {
     SOUTH: "https://webcam.afbn.ch/G_AIR_CMAxxxx_x_KAM_001_Sued.jpg",
 }
 WEBCAM_REFRESH = datetime.timedelta(minutes=1)
+
+# The traffic counters are opt in, in the options, and take a key of their
+# own. A key is limited to about one request a minute; one every 2 leaves room
+# for a probe.
+CONF_COUNTERS = "counters"
+CONF_COUNTERS_API_KEY = "counters_api_key"
+COUNTERS_INTERVAL = datetime.timedelta(minutes=2)

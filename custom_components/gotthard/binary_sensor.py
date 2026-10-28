@@ -11,8 +11,13 @@ from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
-from custom_components.gotthard import GotthardConfigEntry, GotthardCoordinator
-from custom_components.gotthard.const import ATTRIBUTION
+from custom_components.gotthard import (
+    CountersCoordinator,
+    GotthardConfigEntry,
+    GotthardCoordinator,
+)
+from custom_components.gotthard.const import ATTRIBUTION, NORTH, SOUTH
+from custom_components.gotthard.counters import Traffic
 from custom_components.gotthard.datex import Closures, GotthardStatus
 
 
@@ -38,6 +43,59 @@ async def async_setup_entry(
             ),
         ]
     )
+    if counters := coordinator.counters:
+        async_add_entities(
+            [
+                # A southbound queue is before the north portal.
+                TrafficBinary(
+                    counters,
+                    "queue_forming_north",
+                    lambda t: t.forming[SOUTH],
+                    coordinator.device_info,
+                ),
+                TrafficBinary(
+                    counters,
+                    "queue_forming_south",
+                    lambda t: t.forming[NORTH],
+                    coordinator.device_info,
+                ),
+                TrafficBinary(
+                    counters,
+                    "axenstrasse_traffic",
+                    lambda t: t.axen_flowing,
+                    coordinator.roads_device_info,
+                    BinarySensorDeviceClass.MOVING,
+                ),
+            ]
+        )
+
+
+class TrafficBinary(CoordinatorEntity[CountersCoordinator], BinarySensorEntity):
+    """From the counted traffic: a queue forming, traffic on a road."""
+
+    _attr_attribution = ATTRIBUTION
+    _attr_has_entity_name = True
+
+    def __init__(
+        self,
+        coordinator: CountersCoordinator,
+        key: str,
+        value: Callable[[Traffic], bool | None],
+        device_info,
+        device_class: BinarySensorDeviceClass | None = None,
+    ) -> None:
+        super().__init__(coordinator)
+        self._value = value
+        self._attr_translation_key = key
+        self._attr_unique_id = f"{coordinator.config_entry.entry_id}-{key}"
+        self._attr_device_info = device_info
+        self._attr_device_class = device_class
+
+    @property
+    def is_on(self) -> bool | None:
+        if self.coordinator.data is None:
+            return None
+        return self._value(self.coordinator.data)
 
 
 class GotthardOpen(CoordinatorEntity[GotthardCoordinator], BinarySensorEntity):

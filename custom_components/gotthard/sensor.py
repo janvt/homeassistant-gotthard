@@ -12,13 +12,18 @@ from homeassistant.components.sensor import (
     SensorEntityDescription,
     SensorStateClass,
 )
-from homeassistant.const import UnitOfLength, UnitOfTime
+from homeassistant.const import UnitOfLength, UnitOfSpeed, UnitOfTime
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
-from custom_components.gotthard import GotthardConfigEntry, GotthardCoordinator
+from custom_components.gotthard import (
+    CountersCoordinator,
+    GotthardConfigEntry,
+    GotthardCoordinator,
+)
 from custom_components.gotthard.const import ATTRIBUTION, NORTH, SOUTH
+from custom_components.gotthard.counters import ROUTES, STATIONS, Station
 from custom_components.gotthard.datex import (
     ROADS,
     Closure,
@@ -181,6 +186,8 @@ async def async_setup_entry(
     async_add_entities(
         GotthardSensor(entry.runtime_data, description) for description in SENSORS
     )
+    if counters := entry.runtime_data.counters:
+        await _async_setup_traffic(counters, async_add_entities)
 
 
 class GotthardSensor(CoordinatorEntity[GotthardCoordinator], SensorEntity):
@@ -213,3 +220,101 @@ class GotthardSensor(CoordinatorEntity[GotthardCoordinator], SensorEntity):
             return None
         language = self.hass.config.language.partition("-")[0]
         return self.entity_description.attributes(self.coordinator.data, language)
+
+
+# ── traffic counters, opt in ────────────────────────────────────────────────
+KINDS = ("flow", "lorries", "speed")
+
+
+async def _async_setup_traffic(
+    coordinator: CountersCoordinator, async_add_entities: AddEntitiesCallback
+) -> None:
+    async_add_entities(
+        [
+            *(
+                StationSensor(coordinator, station, direction, kind)
+                for station in STATIONS
+                for direction in (SOUTH, NORTH)
+                for kind in KINDS
+            ),
+            *(TravelTimeSensor(coordinator, route) for route in ROUTES),
+        ]
+    )
+
+
+class StationSensor(CoordinatorEntity[CountersCoordinator], SensorEntity):
+    """One direction of a counting station: vehicles, lorries or speed."""
+
+    _attr_attribution = ATTRIBUTION
+    _attr_has_entity_name = True
+    _attr_state_class = SensorStateClass.MEASUREMENT
+    _attr_suggested_display_precision = 0
+
+    def __init__(
+        self,
+        coordinator: CountersCoordinator,
+        station: Station,
+        direction: str,
+        kind: str,
+    ) -> None:
+        super().__init__(coordinator)
+        self._key = (station.key, direction)
+        self._kind = kind
+        self._attr_translation_key = f"{kind}_{direction}"
+        self._attr_unique_id = (
+            f"{coordinator.config_entry.entry_id}-{station.key}-{kind}_{direction}"
+        )
+        self._attr_device_info = coordinator.station_device(station.key)
+        if kind == "speed":
+            self._attr_device_class = SensorDeviceClass.SPEED
+            self._attr_native_unit_of_measurement = UnitOfSpeed.KILOMETERS_PER_HOUR
+            # For the map card.
+            self._attr_extra_state_attributes = {
+                "latitude": station.latitude,
+                "longitude": station.longitude,
+            }
+        else:
+            self._attr_native_unit_of_measurement = "veh/h"
+            self._attr_icon = "mdi:truck" if kind == "lorries" else "mdi:car-multiple"
+
+    @property
+    def available(self) -> bool:
+        return (
+            super().available
+            and self.coordinator.data is not None
+            and self._key in self.coordinator.data.stations
+        )
+
+    @property
+    def native_value(self) -> float | None:
+        reading = self.coordinator.data.stations[self._key]
+        # No vehicles, no speed: unknown, not 0.
+        return {
+            "flow": reading.flow,
+            "lorries": reading.lorries,
+            "speed": reading.speed,
+        }[self._kind]
+
+
+class TravelTimeSensor(CoordinatorEntity[CountersCoordinator], SensorEntity):
+    """Minutes along a route, from its stations' speeds."""
+
+    _attr_attribution = ATTRIBUTION
+    _attr_device_class = SensorDeviceClass.DURATION
+    _attr_has_entity_name = True
+    _attr_native_unit_of_measurement = UnitOfTime.MINUTES
+    _attr_state_class = SensorStateClass.MEASUREMENT
+    _attr_suggested_display_precision = 0
+
+    def __init__(self, coordinator: CountersCoordinator, route: str) -> None:
+        super().__init__(coordinator)
+        self._route = route
+        self._attr_translation_key = f"travel_{route}"
+        self._attr_unique_id = f"{coordinator.config_entry.entry_id}-travel_{route}"
+        self._attr_device_info = coordinator.config_entry.runtime_data.roads_device_info
+
+    @property
+    def native_value(self) -> float | None:
+        if self.coordinator.data is None:
+            return None
+        return self.coordinator.data.travel.get(self._route)

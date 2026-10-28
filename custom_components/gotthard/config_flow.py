@@ -5,15 +5,34 @@ from collections.abc import Mapping
 from typing import Any
 
 import voluptuous as vol
-from homeassistant.config_entries import ConfigFlow, ConfigFlowResult
+from homeassistant.config_entries import (
+    ConfigEntry,
+    ConfigFlow,
+    ConfigFlowResult,
+    OptionsFlow,
+)
+from homeassistant.core import callback
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
 from homeassistant.helpers.selector import (
+    BooleanSelector,
     TextSelector,
     TextSelectorConfig,
     TextSelectorType,
 )
 
-from custom_components.gotthard.const import API_KEY_URL, CONF_API_KEY, DOMAIN, NAME
+from custom_components.gotthard.const import (
+    API_KEY_URL,
+    CONF_API_KEY,
+    CONF_COUNTERS,
+    CONF_COUNTERS_API_KEY,
+    DOMAIN,
+    NAME,
+)
+from custom_components.gotthard.counters import (
+    Counters,
+    CountersAuthError,
+    CountersError,
+)
 from custom_components.gotthard.datex import AuthError, Datex, DatexError
 
 _LOGGER = logging.getLogger(__name__)
@@ -29,6 +48,11 @@ SCHEMA = vol.Schema(
 
 class GotthardFlowHandler(ConfigFlow, domain=DOMAIN):
     VERSION = 1
+
+    @staticmethod
+    @callback
+    def async_get_options_flow(config_entry: ConfigEntry) -> OptionsFlow:
+        return GotthardOptionsFlow()
 
     async def async_step_user(
         self, user_input: dict[str, Any] | None = None
@@ -80,3 +104,50 @@ class GotthardFlowHandler(ConfigFlow, domain=DOMAIN):
             _LOGGER.warning("Cannot check the API key: %s", err)
             return {"base": "cannot_connect"}
         return {}
+
+
+class GotthardOptionsFlow(OptionsFlow):
+    """The traffic counters: off unless turned on here, with their own key."""
+
+    async def async_step_init(
+        self, user_input: dict[str, Any] | None = None
+    ) -> ConfigFlowResult:
+        errors = {}
+        options = self.config_entry.options
+        if user_input is not None:
+            enabled = user_input.get(CONF_COUNTERS, False)
+            api_key = (user_input.get(CONF_COUNTERS_API_KEY) or "").strip()
+            if enabled and not api_key:
+                errors[CONF_COUNTERS_API_KEY] = "counters_key_required"
+            elif enabled:
+                try:
+                    await Counters(
+                        async_get_clientsession(self.hass), api_key
+                    ).async_get()
+                except CountersAuthError:
+                    errors["base"] = "invalid_auth"
+                except CountersError as err:
+                    _LOGGER.warning("Cannot check the counters key: %s", err)
+                    errors["base"] = "cannot_connect"
+            if not errors:
+                # Turned off, the key is kept for turning them on again.
+                return self.async_create_entry(
+                    data={CONF_COUNTERS: enabled, CONF_COUNTERS_API_KEY: api_key}
+                )
+        schema = vol.Schema(
+            {
+                vol.Required(
+                    CONF_COUNTERS, default=options.get(CONF_COUNTERS, False)
+                ): BooleanSelector(),
+                vol.Optional(
+                    CONF_COUNTERS_API_KEY,
+                    description={"suggested_value": options.get(CONF_COUNTERS_API_KEY)},
+                ): TextSelector(TextSelectorConfig(type=TextSelectorType.PASSWORD)),
+            }
+        )
+        return self.async_show_form(
+            step_id="init",
+            data_schema=schema,
+            errors=errors,
+            description_placeholders={"api_key_url": API_KEY_URL},
+        )

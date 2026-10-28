@@ -2,3 +2,7 @@ line-length = 88
 
 [lint]
 select = ["F", "E", "W", "I001"]
+
+[lint.per-file-ignores]
+# The counts' request is DATEX II XML, kept in long literal lines.
+"custom_components/gotthard/counters.py" = ["E501"]

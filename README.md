@@ -58,6 +58,33 @@ lane, the hard shoulder or a ramp. One both ways counts in each direction.
 A closure "nachts" or "tagsüber" only counts in those hours of each day of
 its period.
 
+## Traffic counters (opt in)
+
+FEDRO counts the traffic at its stations every minute. Turn them on under
+*Settings → Devices & services → Gotthard → Configure* (**Traffic counters**),
+with a second free key, for **Traffic Counters**, from the same
+[API manager](https://api-manager.opentransportdata.swiss). They're polled
+every 2 minutes, and each reading is averaged over the last 10.
+
+Each station is a device with, southbound and northbound, the vehicles per
+hour, the lorries per hour, and the average speed (the speed sensors carry
+the station's coordinates, for the map card):
+
+| A2, north to south | Stans, Buochs, Seedorf, Altdorf, Amsteg, Gurtnellen, Wassen, Göschenen, Quinto |
+|---|---|
+| **A4** | **Goldau, Schwyz, Sisikon (Axenstrasse)** |
+
+And from them:
+
+| Entity | |
+|---|---|
+| Queue forming before the north / south portal | On when the stations before the portal (Wassen and Göschenen southbound, Quinto northbound) are below 40 km/h, often before FEDRO reports a queue |
+| Axenstrasse traffic | On while vehicles are counted at Sisikon: the road is open, whatever the traffic messages say |
+| Travel time Altdorf ↔ Göschenen, Altdorf ↔ Stans | Minutes, from the stations' speeds and the road between them |
+
+The feed has no names for its stations, only ids and coordinates; they're
+placed in `counters.py` by their coordinates and Alert-C points.
+
 ## How the messages are read
 
 FEDRO's messages give a queue's length and the time it costs only in their
@@ -67,6 +94,12 @@ integration reads the German texts: a queue towards the Gotthard that names
 Göschenen or Airolo is before that portal, and an A2 message about the tunnel
 whose situation is *gesperrt* is a closure. If FEDRO changes its wording, these
 may be missed: please open an issue with the message.
+
+## Icon
+
+`custom_components/gotthard/brand/` has the icon (`icon.png`, `icon@2x.png`),
+which Home Assistant 2026.3 and later show from there. `scripts/make_icon.py`
+draws them.
 
 ## Development
 
