@@ -27,7 +27,8 @@ The traffic messages need a free API key:
 A key is limited to 260 000 requests per six months and expires after six
 months unless FEDRO extends it (`verkehrsdaten-plattform@astra.admin.ch`). The
 integration asks once every 5 minutes, and asks for a new key when the old one
-is refused.
+is refused. To change it before that, rotating it say, use ⋮ → **Reconfigure** on
+the integration's entry; the traffic counters' key is under **Configure**.
 
 ## Entities
 

@@ -2,7 +2,8 @@
     "config": {
         "abort": {
             "already_configured": "The Gotthard is already set up",
-            "reauth_successful": "The new API key works"
+            "reauth_successful": "The new API key works",
+            "reconfigure_successful": "The new API key works"
         },
         "error": {
             "invalid_auth": "The API key was refused",
@@ -19,6 +20,13 @@
             "reauth_confirm": {
                 "title": "Gotthard Tunnel Traffic: new API key",
                 "description": "The API key was refused. Keys expire after six months: get a new one from {api_key_url}.",
+                "data": {
+                    "api_key": "API key"
+                }
+            },
+            "reconfigure": {
+                "title": "Gotthard Tunnel Traffic: traffic messages key",
+                "description": "A new API key for \"Traffic Situations\", from {api_key_url}: when the old one expires or you rotate it. The traffic counters' key is under Configure.",
                 "data": {
                     "api_key": "API key"
                 }

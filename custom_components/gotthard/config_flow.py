@@ -100,6 +100,25 @@ class GotthardFlowHandler(ConfigFlow, domain=DOMAIN):
             description_placeholders={"api_key_url": API_KEY_URL},
         )
 
+    async def async_step_reconfigure(
+        self, user_input: dict[str, Any] | None = None
+    ) -> ConfigFlowResult:
+        """A new key for the traffic messages, before the old one is refused:
+        keys expire, and are rotated. The counters' key is in the options."""
+        errors = {}
+        if user_input is not None:
+            errors = await self._async_check(user_input[CONF_API_KEY])
+            if not errors:
+                return self.async_update_reload_and_abort(
+                    self._get_reconfigure_entry(), data_updates=user_input
+                )
+        return self.async_show_form(
+            step_id="reconfigure",
+            data_schema=SCHEMA,
+            errors=errors,
+            description_placeholders={"api_key_url": API_KEY_URL},
+        )
+
     async def _async_check(self, api_key: str) -> dict[str, str]:
         """Errors of the form, from trying the key."""
         try:

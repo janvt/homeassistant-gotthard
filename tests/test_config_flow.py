@@ -147,3 +147,25 @@ async def test_radius_45_km_by_default(hass, entry):
         result["flow_id"], {CONF_RADIUS: 0, CONF_COUNTERS: False}
     )
     assert entry.options[CONF_RADIUS] == 0
+
+
+async def test_reconfigure_the_messages_key(hass, entry, feed):
+    """The messages' key, rotated before it's refused."""
+    result = await entry.start_reconfigure_flow(hass)
+    assert result["step_id"] == "reconfigure"
+    result = await hass.config_entries.flow.async_configure(
+        result["flow_id"], {CONF_API_KEY: "rotated-key"}
+    )
+    assert result["type"] is FlowResultType.ABORT
+    assert result["reason"] == "reconfigure_successful"
+    assert entry.data == {CONF_API_KEY: "rotated-key"}
+
+
+async def test_reconfigure_with_a_refused_key(hass, entry, aioclient_mock):
+    aioclient_mock.post(URL, status=HTTPStatus.FORBIDDEN)
+    result = await entry.start_reconfigure_flow(hass)
+    result = await hass.config_entries.flow.async_configure(
+        result["flow_id"], {CONF_API_KEY: "wrong"}
+    )
+    assert result["errors"] == {"base": "invalid_auth"}
+    assert entry.data == {CONF_API_KEY: API_KEY}

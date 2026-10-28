@@ -2,7 +2,8 @@
     "config": {
         "abort": {
             "already_configured": "Der Gotthard ist bereits eingerichtet",
-            "reauth_successful": "Der neue API-Schlüssel funktioniert"
+            "reauth_successful": "Der neue API-Schlüssel funktioniert",
+            "reconfigure_successful": "Der neue API-Schlüssel funktioniert"
         },
         "error": {
             "invalid_auth": "Der API-Schlüssel wurde abgelehnt",
@@ -19,6 +20,13 @@
             "reauth_confirm": {
                 "title": "Gotthard Tunnel Traffic: neuer API-Schlüssel",
                 "description": "Der API-Schlüssel wurde abgelehnt. Schlüssel laufen nach sechs Monaten ab: Holen Sie einen neuen bei {api_key_url}.",
+                "data": {
+                    "api_key": "API-Schlüssel"
+                }
+            },
+            "reconfigure": {
+                "title": "Gotthard Tunnel Traffic: Schlüssel der Verkehrsmeldungen",
+                "description": "Ein neuer API-Schlüssel für «Traffic Situations» von {api_key_url}: wenn der alte abläuft oder Sie ihn wechseln. Der Schlüssel der Verkehrszähler ist unter Konfigurieren.",
                 "data": {
                     "api_key": "API-Schlüssel"
                 }
