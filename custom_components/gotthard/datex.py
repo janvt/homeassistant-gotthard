@@ -207,13 +207,23 @@ class Message:
             return datetime.time(start_h, start_m), datetime.time(end_h, end_m)
         return None
 
+    @property
+    def until(self) -> datetime.datetime | None:
+        """Its end. Without one, the end of the day it started: accidents come
+        without an end, and are often never updated (the Axenstrasse's of 9
+        September was still "closed" in November)."""
+        if self.end is None and self.start is not None:
+            return midnight_after(self.start)
+        return self.end
+
     def _in_period(self, now: datetime.datetime) -> bool:
         # The feed has messages "active" before they start: roadworks
         # announced for next week, say.
         if self.status not in ("active", "definedByValidityTimeSpec"):
             return False
+        until = self.until
         return (self.start is None or self.start <= now) and (
-            self.end is None or now < self.end
+            until is None or now < until
         )
 
     def is_current(self, now: datetime.datetime) -> bool:
@@ -236,14 +246,16 @@ class Message:
         if daily is None or not self._in_period(now) or self.is_current(now):
             return None
         start = _at(now, daily[0])
-        return start if self.end is None or start < self.end else None
+        until = self.until
+        return start if until is None or start < until else None
 
     def end_after(self, start: datetime.datetime) -> datetime.datetime | None:
         """When it ends if it starts, or started, at `start`."""
+        until = self.until
         if (daily := self.daily) is None:
-            return self.end
+            return until
         end = _at(start, daily[1])
-        return min(end, self.end) if self.end else end
+        return min(end, until) if until else end
 
 
 @dataclass(frozen=True)
@@ -484,6 +496,12 @@ def _at(moment: datetime.datetime, time: datetime.time) -> datetime.datetime:
     local = moment.astimezone(SWITZERLAND)
     at = local.replace(hour=time.hour, minute=time.minute, second=0, microsecond=0)
     return at if at > local else at + datetime.timedelta(days=1)
+
+
+def midnight_after(moment: datetime.datetime) -> datetime.datetime:
+    """The end of the day, Swiss time, of `moment`."""
+    day = moment.astimezone(SWITZERLAND).date() + datetime.timedelta(days=1)
+    return datetime.datetime.combine(day, datetime.time(), SWITZERLAND)
 
 
 def _near(message: Message, radius_km: float) -> bool:

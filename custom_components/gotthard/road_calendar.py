@@ -25,6 +25,7 @@ from custom_components.gotthard.datex import (
     SWITZERLAND,
     Message,
     is_closure,
+    midnight_after,
 )
 
 # A closure or restriction with no end announced: shown on the day it started
@@ -158,11 +159,6 @@ def _situation_cause(message: Message) -> str:
     return rest.rstrip(", ")
 
 
-def _midnight_after(moment: datetime.datetime) -> datetime.datetime:
-    day = moment.astimezone(SWITZERLAND).date() + datetime.timedelta(days=1)
-    return datetime.datetime.combine(day, datetime.time(), SWITZERLAND)
-
-
 def occurrences(
     message: Message,
     start: datetime.datetime,
@@ -183,7 +179,7 @@ def occurrences(
     if last is None:
         # No end announced, as for an accident, and often never updated: the
         # day it started only (a night closure, its first night).
-        last = _midnight_after(first) + (
+        last = midnight_after(first) + (
             datetime.timedelta(days=1) if daily else datetime.timedelta()
         )
     if daily is None:

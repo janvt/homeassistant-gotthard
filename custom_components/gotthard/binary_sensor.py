@@ -41,6 +41,7 @@ async def async_setup_entry(
                 "axenstrasse",
                 lambda status: status.axenstrasse,
                 coordinator.roads_device_info,
+                lambda traffic: traffic.axen_flowing,
             ),
         ]
     )
@@ -106,7 +107,9 @@ class TrafficBinary(
 class GotthardOpen(
     StableObjectId, CoordinatorEntity[GotthardCoordinator], BinarySensorEntity
 ):
-    """On while the road is open: closed for a night, works, an accident."""
+    """On while the road is open: closed for a night, works, an accident.
+    With the counters, traffic counted on it opens it, whatever the messages
+    say: they keep closures long after they are over."""
 
     _attr_attribution = ATTRIBUTION
     _attr_device_class = BinarySensorDeviceClass.OPENING
@@ -119,9 +122,11 @@ class GotthardOpen(
         key: str,
         closures: Callable[[GotthardStatus], Closures],
         device_info,
+        flowing: Callable[[Traffic], bool | None] | None = None,
     ) -> None:
         super().__init__(coordinator)
         self._closures = closures
+        self._flowing = flowing
         self._attr_translation_key = key
         if key.startswith("axenstrasse"):
             self._object_id = key
@@ -129,9 +134,32 @@ class GotthardOpen(
         self._attr_unique_id = f"{coordinator.config_entry.entry_id}-{key}"
         self._attr_device_info = device_info
 
+    async def async_added_to_hass(self) -> None:
+        await super().async_added_to_hass()
+        if self._flowing and (counters := self.coordinator.counters):
+            self.async_on_remove(
+                counters.async_add_listener(self._handle_coordinator_update)
+            )
+
+    @property
+    def _traffic_flowing(self) -> bool | None:
+        """Whether traffic is counted on the road, if the counters say."""
+        counters = self.coordinator.counters
+        if not (
+            self._flowing
+            and counters
+            and counters.last_update_success
+            and counters.data
+        ):
+            return None
+        return self._flowing(counters.data)
+
     @property
     def is_on(self) -> bool:
-        return not self._closures(self.coordinator.data).closed
+        return (
+            not self._closures(self.coordinator.data).closed
+            or self._traffic_flowing is True
+        )
 
     @property
     def extra_state_attributes(self) -> dict[str, Any]:
@@ -145,5 +173,10 @@ class GotthardOpen(
                     "direction": closure.direction,
                 }
                 for closure in self._closures(self.coordinator.data).current
-            ]
+            ],
+            **(
+                {"traffic_flowing": flowing}
+                if (flowing := self._traffic_flowing) is not None
+                else {}
+            ),
         }

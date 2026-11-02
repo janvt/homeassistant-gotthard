@@ -2,6 +2,7 @@
 
 import datetime
 from http import HTTPStatus
+from pathlib import Path
 
 import pytest
 from homeassistant.components.camera import async_get_image
@@ -94,23 +95,43 @@ async def test_webcams(hass, loaded, aioclient_mock):
     )
 
 
+# The Axenstrasse's closure with no end as if it had started this morning, not
+# on 9 September.
+CLOSED_TODAY = (
+    (Path(__file__).parent / "fixtures" / "situations.xml")
+    .read_bytes()
+    .replace(b"2026-09-09T07:08:00", b"2026-10-28T07:08:00")
+)
+
+
 async def test_national_roads(hass, loaded):
+    # Its closure with no end was on 9 September: over since.
     axen = hass.states.get("binary_sensor.national_roads_axenstrasse")
-    assert axen.state == STATE_OFF
-    assert axen.attributes["closures"][0]["text"].startswith(
-        "Freigegeben: A4 Altdorf <-> Brunnen zwischen Ortschaft Flüelen"
-    )
+    assert axen.state == STATE_ON
+    assert axen.attributes["closures"] == []
+    assert "traffic_flowing" not in axen.attributes
     nxt = hass.states.get("sensor.national_roads_next_axenstrasse_closure")
     assert datetime.datetime.fromisoformat(
         nxt.state
     ) == datetime.datetime.fromisoformat("2026-11-02T22:00:00+01:00")
     a4 = hass.states.get("sensor.national_roads_a4_closures_northbound_to_schaffhausen")
-    assert a4.state == "1"
+    # The Axenstrasse's of 9 September no longer counts.
+    assert a4.state == "0"
     # Within 45 km of the Gotthard, the default: not Winterthur.
     assert len(a4.attributes["planned"]) == 1
     a2 = hass.states.get("sensor.national_roads_a2_closures_southbound_to_chiasso")
     # The tunnel's two; Lucerne (54 km) and Basel (127 km) are out.
     assert (a2.state, len(a2.attributes["planned"])) == ("0", 2)
+
+
+@pytest.mark.parametrize("situations", [CLOSED_TODAY])
+async def test_axenstrasse_closed_today(hass, loaded):
+    axen = hass.states.get("binary_sensor.national_roads_axenstrasse")
+    assert axen.state == STATE_OFF
+    assert axen.attributes["closures"][0]["text"].startswith(
+        "Freigegeben: A4 Altdorf <-> Brunnen zwischen Ortschaft Flüelen"
+    )
+    assert axen.attributes["closures"][0]["until"] == "2026-10-29T00:00:00+01:00"
 
 
 # ── the traffic counters ────────────────────────────────────────────────────
@@ -168,6 +189,16 @@ async def test_traffic_derived(hass, with_traffic):
     )
     travel = hass.states.get("sensor.national_roads_travel_time_altdorf_goschenen")
     assert 10 < float(travel.state) < 25
+
+
+@pytest.mark.parametrize("situations", [CLOSED_TODAY])
+async def test_traffic_on_the_axenstrasse_opens_it(hass, with_traffic):
+    """The messages say closed; 1020 vehicles an hour say otherwise."""
+    axen = hass.states.get("binary_sensor.national_roads_axenstrasse")
+    assert axen.state == STATE_ON
+    assert axen.attributes["traffic_flowing"] is True
+    # What the messages say is still there to read.
+    assert len(axen.attributes["closures"]) == 1
 
 
 async def test_calendars(hass, loaded):
