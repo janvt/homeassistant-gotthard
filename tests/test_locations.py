@@ -12,6 +12,7 @@ from custom_components.gotthard.locations import distance, place
 
 FIXTURE = (Path(__file__).parent / "fixtures" / "situations.xml").read_bytes()
 NOW = datetime.datetime(2026, 10, 28, 12, 0, tzinfo=ZoneInfo("Europe/Zurich"))
+SEPTEMBER_9 = datetime.datetime(2026, 9, 9, 12, 0, tzinfo=datetime.UTC)
 
 
 def ids(messages):
@@ -73,9 +74,12 @@ def test_messages_that_cant_be_placed_stay():
 
 def test_the_axenstrasse_stays_whatever_the_radius():
     status = parse(FIXTURE, NOW, radius_km=5)
-    assert {"axen-now", "axen-nights"} <= ids(status.calendars["axenstrasse"])
-    assert status.axenstrasse.closed
+    assert "axen-nights" in ids(status.calendars["axenstrasse"])
     assert "axen-nights" in ids(status.axenstrasse.planned)
+    # On the day of the closure with no end.
+    on_the_day = parse(FIXTURE, SEPTEMBER_9, radius_km=5)
+    assert "axen-now" in ids(on_the_day.calendars["axenstrasse"])
+    assert on_the_day.axenstrasse.closed
 
 
 def test_a_wider_radius():

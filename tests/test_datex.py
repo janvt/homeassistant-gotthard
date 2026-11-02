@@ -12,6 +12,8 @@ from custom_components.gotthard.datex import DatexError, Queue, parse
 FIXTURE = (Path(__file__).parent / "fixtures" / "situations.xml").read_bytes()
 CET = datetime.timezone(datetime.timedelta(hours=1))
 NOW = datetime.datetime(2026, 10, 28, 12, 0, tzinfo=CET)
+# The day the Axenstrasse's closure with no end started.
+SEPTEMBER_9 = datetime.datetime(2026, 9, 9, 12, 0, tzinfo=datetime.UTC)
 
 
 def ids(messages):
@@ -126,11 +128,20 @@ def test_invalid(document):
 
 
 # ── closures of the A2 and A4 ───────────────────────────────────────────────
-def test_the_axenstrasse_closed_with_no_end():
-    status = parse(FIXTURE, NOW)
+def test_the_axenstrasse_closed_with_no_end_on_its_first_day():
+    status = parse(FIXTURE, SEPTEMBER_9)
     assert status.axenstrasse.closed
     assert ids(status.axenstrasse.current) == ["axen-now"]
-    assert status.axenstrasse.current[0].end is None
+    assert status.axenstrasse.current[0].end == local(2026, 9, 10, 0, 0)
+
+
+def test_a_closure_with_no_end_is_over_at_the_end_of_its_day():
+    """Accidents come without an end, and are often never updated: the
+    Axenstrasse's of 9 September was "closed" for weeks."""
+    assert parse(FIXTURE, local(2026, 9, 9, 23, 59)).axenstrasse.closed
+    status = parse(FIXTURE, local(2026, 9, 10, 0, 0))
+    assert "axen-now" not in ids(status.axenstrasse.current)
+    assert not parse(FIXTURE, NOW).axenstrasse.closed
 
 
 def test_an_announced_closure_starts_with_its_period_not_its_announcement():
@@ -193,10 +204,10 @@ def test_closures_by_road_and_direction():
         "a2-hagnau",
     ]
     assert ids(roads["A2"][SOUTH].planned) == [*tunnel, "a2-both-ways", "a2-hagnau"]
+    assert not roads["A4"][NORTH].current and not roads["A4"][SOUTH].current
+    on_the_day = parse(FIXTURE, SEPTEMBER_9).roads["A4"]
     assert (
-        ids(roads["A4"][NORTH].current)
-        == ids(roads["A4"][SOUTH].current)
-        == ["axen-now"]
+        ids(on_the_day[NORTH].current) == ids(on_the_day[SOUTH].current) == ["axen-now"]
     )
     assert ids(roads["A4"][NORTH].planned) == ["axen-nights", "a4-north"]
     assert ids(roads["A4"][SOUTH].planned) == ["axen-nights"]
